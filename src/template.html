@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
+<meta name="description" content="Báo cáo so sánh điểm KTĐK Lần 1 và Lần 2 khối 12, THPT Chi Lăng. Danh sách phụ đạo và bồi dưỡng từng lớp, từng môn.">
+<title>Báo cáo KTĐK L1–L2 | Khối 12 – THPT Chi Lăng</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+/*__STYLE__*/
+</style>
+</head>
+<body>
+
+<nav class="topnav no-print">
+  <div class="wrap">
+    <div class="brandmini">KTĐK KHỐI 12<small>THPT Chi Lăng</small></div>
+    <a class="navlink" href="#tong-quan">Tổng quan</a>
+    <a class="navlink" href="#ma-tran">Ma trận</a>
+    <a class="navlink" href="#lop">Từng lớp</a>
+    <a class="navlink" href="#khoi">Toàn khối</a>
+    <a class="navlink" href="#timkiem">Tra cứu</a>
+    <span class="ver" id="verBadge"></span>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <span class="kicker">SỞ GD&amp;ĐT GIA LAI • TRƯỜNG THPT CHI LĂNG</span>
+    <span class="kicker gold">KHỐI 12 • NĂM HỌC 2026–2027</span>
+    <h1>Báo cáo so sánh điểm KTĐK<br>Lần 1 <span class="vs">vs</span> Lần 2 — Danh sách phụ đạo / bồi dưỡng</h1>
+    <p class="sub">Tổng hợp tình hình học tập từng lớp và toàn khối. Tự động liệt kê HS cần <b class="r">phụ đạo (&lt;5)</b>, cần <b class="y">quan tâm (5–6.5)</b> và <b class="g">bồi dưỡng (≥8)</b> theo từng môn.</p>
+    <p class="meta" id="metaLine">Đang khởi tạo…</p>
+  </div>
+</header>
+
+<main>
+<div class="wrap">
+
+  <section class="block">
+    <div class="card alert">
+      <h3>Cảnh báo nhanh của tổ chuyên môn</h3>
+      <ul id="alertBox"></ul>
+    </div>
+  </section>
+
+  <section class="block" id="tong-quan">
+    <div class="sec-head">
+      <span class="sec-num">1</span>
+      <div><h2>Tổng quan toàn khối</h2><p>Điểm trung bình và tỉ lệ dưới trung bình L1 → L2</p></div>
+    </div>
+    <div class="grid g4" id="kpiGrid" style="margin-bottom:14px"></div>
+    <div class="grid g2" style="margin-bottom:14px">
+      <div class="card">
+        <h3>Điểm trung bình L1 → L2</h3>
+        <p class="hint">Chỉ so sánh môn đã thi đủ 2 lần ở hầu hết lớp</p>
+        <div id="chartAvg"></div>
+      </div>
+      <div class="card">
+        <h3>Tỉ lệ dưới TB (&lt;5)</h3>
+        <p class="hint">% bài dưới 5 trong số bài thi từng lần</p>
+        <div id="chartBelow"></div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Chi tiết từng môn</h3>
+      <div class="tblwrap"><table class="tbl">
+        <thead><tr>
+          <th class="l">Môn</th><th>N L1/L2</th><th>TB L1</th><th>TB L2</th>
+          <th>Chênh lệch</th><th>&lt;5 L1</th><th>&lt;5 L2</th><th>≥8 (L2)</th><th>Xu hướng</th>
+        </tr></thead>
+        <tbody id="tbKhoi"></tbody>
+      </table></div>
+    </div>
+  </section>
+
+  <section class="block" id="ma-tran">
+    <div class="sec-head">
+      <span class="sec-num">2</span>
+      <div><h2>Ma trận lớp × môn</h2><p>Ô = TB L2 • pill Δ so với L1 • nền đỏ = cần họp tổ gấp</p></div>
+    </div>
+    <div class="card"><div class="tblwrap" id="matrixWrap"></div></div>
+  </section>
+
+  <section class="block" id="lop">
+    <div class="sec-head">
+      <span class="sec-num">3</span>
+      <div><h2>Chi tiết từng lớp</h2><p>Chọn lớp và môn để lấy danh sách kèm tên học sinh</p></div>
+    </div>
+    <div id="gateBox" style="margin-bottom:14px"></div>
+    <div class="card no-print" style="margin-bottom:14px">
+      <div class="toolbar">
+        <div class="field"><label>CHỌN LỚP</label><select id="selLop"></select></div>
+        <div class="field"><label>CHỌN MÔN</label><select id="selMon"></select></div>
+        <button class="btn pri" id="btnCsvLop" type="button">Tải CSV lớp này</button>
+        <button class="btn" type="button" onclick="window.print()">In danh sách</button>
+        <div class="statline" id="lopStat"></div>
+      </div>
+    </div>
+    <div class="grid g3" style="margin-bottom:14px">
+      <div class="card edge-red">
+        <h3 class="ttl-red">Cần phụ đạo (&lt;5)<span class="count" id="cPhu"></span></h3>
+        <p class="hint">Ưu tiên mở lớp phụ đạo ngay.</p>
+        <div class="tblwrap scrollbox"><table class="tbl">
+          <thead><tr><th class="l">Học sinh</th><th>L1</th><th>L2</th><th>Δ</th></tr></thead>
+          <tbody id="tbPhu"></tbody>
+        </table></div>
+      </div>
+      <div class="card edge-amber">
+        <h3 class="ttl-amber">Cần quan tâm (5–6.5)<span class="count" id="cQuan"></span></h3>
+        <p class="hint">Nguy cơ rớt ở lần 3.</p>
+        <div class="tblwrap scrollbox"><table class="tbl">
+          <thead><tr><th class="l">Học sinh</th><th>L1</th><th>L2</th><th>Δ</th></tr></thead>
+          <tbody id="tbQuan"></tbody>
+        </table></div>
+      </div>
+      <div class="card edge-green">
+        <h3 class="ttl-green">Bồi dưỡng (≥8)<span class="count" id="cBoi"></span></h3>
+        <p class="hint">Nguồn HSG, giao đề nâng cao.</p>
+        <div class="tblwrap scrollbox"><table class="tbl">
+          <thead><tr><th class="l">Học sinh</th><th>L1</th><th>L2</th><th>Δ</th></tr></thead>
+          <tbody id="tbBoi"></tbody>
+        </table></div>
+      </div>
+    </div>
+    <div class="grid g2">
+      <div class="card">
+        <h3>Tiến bộ vượt bậc (tăng ≥1.5đ)<span class="count" id="cTien"></span></h3>
+        <div class="tblwrap scrollbox"><table class="tbl">
+          <thead><tr><th class="l">Học sinh</th><th>L1</th><th>L2</th><th>Δ</th></tr></thead>
+          <tbody id="tbTien"></tbody>
+        </table></div>
+      </div>
+      <div class="card">
+        <h3>Thụt lùi báo động (giảm ≥2đ)<span class="count" id="cThut"></span></h3>
+        <div class="tblwrap scrollbox"><table class="tbl">
+          <thead><tr><th class="l">Học sinh</th><th>L1</th><th>L2</th><th>Δ</th></tr></thead>
+          <tbody id="tbThut"></tbody>
+        </table></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="khoi">
+    <div class="sec-head">
+      <span class="sec-num">4</span>
+      <div><h2>Toàn khối theo môn</h2><p>Gộp danh sách phụ đạo / bồi dưỡng cả khối</p></div>
+    </div>
+    <div class="card no-print" style="margin-bottom:14px">
+      <div class="tabs" id="monTabs"></div>
+    </div>
+    <div class="grid g2" style="margin-bottom:14px">
+      <div class="card edge-red">
+        <h3 class="ttl-red">Toàn khối cần phụ đạo<span class="count" id="kPhu"></span></h3>
+        <div class="tblwrap scrollbox"><table class="tbl">
+          <thead><tr><th>Lớp</th><th class="l">Học sinh</th><th>L1</th><th>L2</th></tr></thead>
+          <tbody id="kTbPhu"></tbody>
+        </table></div>
+        <div class="no-print" style="margin-top:10px">
+          <button class="btn dark" id="btnCsvKhoi" type="button">Tải CSV toàn khối (môn đang chọn)</button>
+        </div>
+      </div>
+      <div class="card edge-green">
+        <h3 class="ttl-green">Toàn khối bồi dưỡng<span class="count" id="kBoi"></span></h3>
+        <div class="tblwrap scrollbox"><table class="tbl">
+          <thead><tr><th>Lớp</th><th class="l">Học sinh</th><th>L1</th><th>L2</th></tr></thead>
+          <tbody id="kTbBoi"></tbody>
+        </table></div>
+      </div>
+    </div>
+    <div class="grid g2">
+      <div class="card">
+        <h3>Top 10 tiến bộ nhất khối</h3>
+        <div class="tblwrap"><table class="tbl">
+          <thead><tr><th>Lớp</th><th class="l">HS</th><th>L1→L2</th><th>Δ</th></tr></thead>
+          <tbody id="kTopTang"></tbody>
+        </table></div>
+      </div>
+      <div class="card">
+        <h3>Top 10 thụt lùi nhất khối</h3>
+        <div class="tblwrap"><table class="tbl">
+          <thead><tr><th>Lớp</th><th class="l">HS</th><th>L1→L2</th><th>Δ</th></tr></thead>
+          <tbody id="kTopGiam"></tbody>
+        </table></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="timkiem">
+    <div class="sec-head">
+      <span class="sec-num">5</span>
+      <div><h2>Tra cứu từng học sinh</h2><p>Gõ tên, không dấu cũng được</p></div>
+    </div>
+    <div class="card searchbox no-print" style="margin-bottom:14px">
+      <input id="q" type="search" placeholder="Ví dụ: bao nguyen, minh duc…" autocomplete="off">
+    </div>
+    <div class="grid g2" id="kq"></div>
+  </section>
+
+  <section class="block">
+    <div class="card notes">
+      <h3>Nhận định &amp; đề xuất của tổ</h3>
+      <ol>
+        <li><b>Toán là điểm nghẽn toàn khối.</b> 4 lớp báo động đỏ: 12A6, 12A11, 12A4, 12A8. Đề nghị tăng tiết phụ đạo, kiểm tra 15 phút mỗi buổi.</li>
+        <li><b>Vật lí phân hóa mạnh:</b> vừa phụ đạo nhóm dưới 5, vừa giữ đội bồi dưỡng ≥8.</li>
+        <li><b>Hóa học là điểm sáng:</b> điểm lên, số em dưới 5 giảm mạnh — nhân rộng cách dạy.</li>
+        <li><b>Sinh &amp; Anh cần giữ nhịp</b> — đưa vào lịch phụ đạo chung với Toán.</li>
+        <li><b>Văn:</b> L2 mới có 12A6 và 12A9. Có thêm điểm là web tự so sánh tiếp.</li>
+      </ol>
+    </div>
+  </section>
+
+</div>
+</main>
+
+<footer class="site">
+  THPT Chi Lăng • Báo cáo tự động từ file điểm rà soát L1–L2 • Ngưỡng: phụ đạo &lt;5 • quan tâm 5–6.5 • bồi dưỡng ≥8
+  <br>Danh sách tên được mã hóa AES-256 — chỉ mở bằng mật khẩu của tổ. Tắt tab là khóa lại.
+</footer>
+
+<script>
+/*__DATA__*/
+</script>
+<script>
+/*__LOCK__*/
+</script>
+<script>
+/*__APP__*/
+</script>
+</body>
+</html>
