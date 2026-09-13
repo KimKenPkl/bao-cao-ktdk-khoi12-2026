@@ -77,6 +77,9 @@ function renderMeta() {
   var txt = "Sĩ số: " + m.siso_l1 + " HS (L1) • " + m.siso_l2 + " HS (L2)";
   txt += " • " + m.classes.length + " lớp";
   txt += " • Dữ liệu cập nhật: " + (m.cap_nhat || "");
+  if (m.lan3) {
+    txt += " • " + m.lan3;
+  }
   $("metaLine").textContent = txt;
   $("verBadge").textContent = "Bản " + (m.cap_nhat || "");
 }
@@ -334,7 +337,7 @@ function doUnlock(pw) {
 }
 
 function needUnlockHTML() {
-  return "<tr><td colspan='4' class='empty'>"
+  return "<tr><td colspan='5' class='empty'>"
     + "Đã khóa — mở khóa ở hộp phía trên để xem tên.</td></tr>";
 }
 
@@ -344,6 +347,7 @@ function row4(x) {
   var h = "<tr><td class='l nm'>" + esc(x.ten) + "</td>";
   h += "<td>" + fmt(x.l1) + "</td>";
   h += "<td class='big'>" + fmt(x.l2) + "</td>";
+  h += "<td class='big'>" + fmt(x.l3) + "</td>";
   h += "<td>" + pill(x.delta) + "</td></tr>";
   return h;
 }
@@ -356,7 +360,7 @@ function fillList(tbodyId, countId, list) {
     return;
   }
   if (!list.length) {
-    tb.innerHTML = "<tr><td colspan='4' class='empty'>Không có</td></tr>";
+    tb.innerHTML = "<tr><td colspan='5' class='empty'>Không có</td></tr>";
   } else {
     tb.innerHTML = list.map(row4).join("");
   }
@@ -371,6 +375,10 @@ function renderLop() {
     + fmt(st.tb1) + " → " + fmt(st.tb2) + "</b> " + pill(st.delta)
     + " • Dưới 5: <b>" + st.duoi5_l1 + " → " + st.duoi5_l2
     + "</b> / " + st.n2 + " bài";
+  if (st.tb3 !== null && st.tb3 !== undefined) {
+    stat += " • <b>L3 TB " + fmt(st.tb3) + "</b> (" + st.n3 + " bài, "
+      + st.duoi5_l3 + " em <5)";
+  }
   $("lopStat").innerHTML = stat;
   if (!SEC) {
     ["tbPhu", "tbQuan", "tbBoi", "tbTien", "tbThut"].forEach(function (id) {
@@ -495,14 +503,24 @@ function searchHS(q) {
     var rows = PUB.meta.subjects.filter(function (mon) {
       var a = s.l1[mon];
       var b = s.l2[mon];
+      var c = s.l3 ? s.l3[mon] : null;
       var hasA = a !== null && a !== undefined;
       var hasB = b !== null && b !== undefined;
-      return hasA || hasB;
+      var hasC = c !== null && c !== undefined;
+      return hasA || hasB || hasC;
+    });
+    var showL3 = rows.some(function (mon) {
+      var c = s.l3 ? s.l3[mon] : null;
+      return c !== null && c !== undefined;
     });
     var body = rows.map(function (mon) {
       var r = "<tr><td class='l'>" + mon + "</td>";
       r += "<td>" + fmt(s.l1[mon]) + "</td>";
       r += "<td class='big'>" + fmt(s.l2[mon]) + "</td>";
+      if (showL3) {
+        var c3 = s.l3 ? s.l3[mon] : null;
+        r += "<td class='big'>" + fmt(c3) + "</td>";
+      }
       r += "<td>" + pill(s.delta[mon]) + "</td>";
       r += "<td>" + groupChip(s.l2[mon]) + "</td></tr>";
       return r;
@@ -511,6 +529,9 @@ function searchHS(q) {
     c += " <span class='pill flat'>" + s.lop + "</span></h3>";
     c += "<div class='tblwrap'><table class='tbl'><thead><tr>";
     c += "<th class='l'>Môn</th><th>L1</th><th>L2</th>";
+    if (showL3) {
+      c += "<th>L3</th>";
+    }
     c += "<th>Δ</th><th>Nhóm</th>";
     c += "</tr></thead><tbody>" + body.join("") + "</tbody></table></div></div>";
     return c;
@@ -557,15 +578,18 @@ function exportCSV(whole) {
   var lop = $("selLop").value;
   var mon = $("selMon").value;
   var L = SEC.class_lists[lop][mon];
-  var r2 = [["Nhom", "Ho ten", "L1", "L2", "Delta"]];
+  var r2 = [["Nhom", "Ho ten", "L1", "L2", "L3", "Delta", "Delta23"]];
   L.phudao.forEach(function (x) {
-    r2.push(["Phu dao", x.ten, x.l1, x.l2, x.delta]);
+    r2.push(["Phu dao", x.ten, x.l1, x.l2, x.l3 === undefined ? "" : x.l3,
+      x.delta, x.delta23 === undefined ? "" : x.delta23]);
   });
   L.quantam.forEach(function (x) {
-    r2.push(["Quan tam", x.ten, x.l1, x.l2, x.delta]);
+    r2.push(["Quan tam", x.ten, x.l1, x.l2, x.l3 === undefined ? "" : x.l3,
+      x.delta, x.delta23 === undefined ? "" : x.delta23]);
   });
   L.boiduong.forEach(function (x) {
-    r2.push(["Boi duong", x.ten, x.l1, x.l2, x.delta]);
+    r2.push(["Boi duong", x.ten, x.l1, x.l2, x.l3 === undefined ? "" : x.l3,
+      x.delta, x.delta23 === undefined ? "" : x.delta23]);
   });
   downloadCSV(lop + "_" + mon + ".csv", r2);
 }
