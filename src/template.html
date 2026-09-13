@@ -32,7 +32,7 @@
     <span class="kicker">SỞ GD&amp;ĐT GIA LAI • TRƯỜNG THPT CHI LĂNG</span>
     <span class="kicker gold">KHỐI 12 • NĂM HỌC 2026–2027</span>
     <h1>Báo cáo so sánh điểm KTĐK<br>Lần 1 <span class="vs">vs</span> Lần 2 — Danh sách phụ đạo / bồi dưỡng</h1>
-    <p class="sub">Tổng hợp tình hình học tập từng lớp và toàn khối. Tự động liệt kê HS cần <b class="r">phụ đạo (&lt;5)</b>, cần <b class="y">quan tâm (5–6.5)</b> và <b class="g">bồi dưỡng (≥8)</b> theo từng môn.</p>
+    <p class="sub">Tổng hợp tình hình học tập từng lớp và toàn khối. Tự động liệt kê HS cần <b class="r">phụ đạo (&lt;5)</b>, cần <b class="y">quan tâm (5–6.5)</b> và <b class="g">bồi dưỡng (≥8)</b> theo từng môn. Đã có <b>TB 3 lần = (L1+L2+L3)/3</b> cho Hóa 12A10.</p>
     <p class="meta" id="metaLine">Đang khởi tạo…</p>
   </div>
 </header>
@@ -103,9 +103,9 @@
     <div class="grid g3" style="margin-bottom:14px">
       <div class="card edge-red">
         <h3 class="ttl-red">Cần phụ đạo (&lt;5)<span class="count" id="cPhu"></span></h3>
-        <p class="hint">Ưu tiên mở lớp phụ đạo ngay.</p>
+        <p class="hint">Ưu tiên mở lớp phụ đạo ngay. TB 3 lần giúp chốt DS.</p>
         <div class="tblwrap scrollbox"><table class="tbl">
-          <thead><tr><th class="l">Học sinh</th><th>L1</th><th>L2</th><th>L3</th><th>Δ</th></tr></thead>
+          <thead><tr><th class="l">Học sinh</th><th>L1</th><th>L2</th><th>L3</th><th>TB 3 lần</th><th>Δ</th></tr></thead>
           <tbody id="tbPhu"></tbody>
         </table></div>
       </div>
@@ -113,7 +113,7 @@
         <h3 class="ttl-amber">Cần quan tâm (5–6.5)<span class="count" id="cQuan"></span></h3>
         <p class="hint">Nguy cơ rớt ở lần 3.</p>
         <div class="tblwrap scrollbox"><table class="tbl">
-          <thead><tr><th class="l">Học sinh</th><th>L1</th><th>L2</th><th>L3</th><th>Δ</th></tr></thead>
+          <thead><tr><th class="l">Học sinh</th><th>L1</th><th>L2</th><th>L3</th><th>TB 3 lần</th><th>Δ</th></tr></thead>
           <tbody id="tbQuan"></tbody>
         </table></div>
       </div>
@@ -121,7 +121,7 @@
         <h3 class="ttl-green">Bồi dưỡng (≥8)<span class="count" id="cBoi"></span></h3>
         <p class="hint">Nguồn HSG, giao đề nâng cao.</p>
         <div class="tblwrap scrollbox"><table class="tbl">
-          <thead><tr><th class="l">Học sinh</th><th>L1</th><th>L2</th><th>L3</th><th>Δ</th></tr></thead>
+          <thead><tr><th class="l">Học sinh</th><th>L1</th><th>L2</th><th>L3</th><th>TB 3 lần</th><th>Δ</th></tr></thead>
           <tbody id="tbBoi"></tbody>
         </table></div>
       </div>
@@ -130,14 +130,14 @@
       <div class="card">
         <h3>Tiến bộ vượt bậc (tăng ≥1.5đ)<span class="count" id="cTien"></span></h3>
         <div class="tblwrap scrollbox"><table class="tbl">
-          <thead><tr><th class="l">Học sinh</th><th>L1</th><th>L2</th><th>L3</th><th>Δ</th></tr></thead>
+          <thead><tr><th class="l">Học sinh</th><th>L1</th><th>L2</th><th>L3</th><th>TB 3 lần</th><th>Δ</th></tr></thead>
           <tbody id="tbTien"></tbody>
         </table></div>
       </div>
       <div class="card">
         <h3>Thụt lùi báo động (giảm ≥2đ)<span class="count" id="cThut"></span></h3>
         <div class="tblwrap scrollbox"><table class="tbl">
-          <thead><tr><th class="l">Học sinh</th><th>L1</th><th>L2</th><th>L3</th><th>Δ</th></tr></thead>
+          <thead><tr><th class="l">Học sinh</th><th>L1</th><th>L2</th><th>L3</th><th>TB 3 lần</th><th>Δ</th></tr></thead>
           <tbody id="tbThut"></tbody>
         </table></div>
       </div>
@@ -217,7 +217,7 @@
 </main>
 
 <footer class="site">
-  THPT Chi Lăng • Báo cáo tự động từ file điểm rà soát L1–L2 • Ngưỡng: phụ đạo &lt;5 • quan tâm 5–6.5 • bồi dưỡng ≥8
+  THPT Chi Lăng • Báo cáo tự động từ file điểm rà soát L1–L2–L3 • Ngưỡng: phụ đạo &lt;5 • quan tâm 5–6.5 • bồi dưỡng ≥8 • TB 3 lần = (L1+L2+L3)/3 (đủ 3 đợt mới hiện)
   <br>Danh sách tên được mã hóa AES-256 — chỉ mở bằng mật khẩu của tổ. Tắt tab là khóa lại.
 </footer>
 

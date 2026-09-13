@@ -25,6 +25,22 @@ function fmt(v) {
   return Number(v).toFixed(2).replace(/\.00$/, "");
 }
 
+function tb3calc(a, b, c) {
+  if (a === null || a === undefined || a === "") return null;
+  if (b === null || b === undefined || b === "") return null;
+  if (c === null || c === undefined || c === "") return null;
+  var v = (Number(a) + Number(b) + Number(c)) / 3;
+  return Math.round(v * 100) / 100;
+}
+
+function tb3color(v) {
+  if (v === null || v === undefined) return "";
+  if (v >= 7) return "color:var(--green)";
+  if (v >= 6.5) return "color:#1d4ed8";
+  if (v >= 5) return "color:var(--amber)";
+  return "color:var(--red)";
+}
+
 function esc(s) {
   return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;");
 }
@@ -337,18 +353,21 @@ function doUnlock(pw) {
 }
 
 function needUnlockHTML() {
-  return "<tr><td colspan='5' class='empty'>"
+  return "<tr><td colspan='6' class='empty'>"
     + "Đã khóa — mở khóa ở hộp phía trên để xem tên.</td></tr>";
 }
 
 /* ---------- 3. Phần khóa (cần SEC) ---------- */
 
 function row4(x) {
+  var tb3 = tb3calc(x.l1, x.l2, x.l3);
+  var d = (x.delta23 !== undefined && x.delta23 !== null) ? x.delta23 : x.delta;
   var h = "<tr><td class='l nm'>" + esc(x.ten) + "</td>";
   h += "<td>" + fmt(x.l1) + "</td>";
   h += "<td class='big'>" + fmt(x.l2) + "</td>";
   h += "<td class='big'>" + fmt(x.l3) + "</td>";
-  h += "<td>" + pill(x.delta) + "</td></tr>";
+  h += "<td class='big' style='" + tb3color(tb3) + ";font-weight:800'>" + fmt(tb3) + "</td>";
+  h += "<td>" + pill(d) + "</td></tr>";
   return h;
 }
 
@@ -360,7 +379,7 @@ function fillList(tbodyId, countId, list) {
     return;
   }
   if (!list.length) {
-    tb.innerHTML = "<tr><td colspan='5' class='empty'>Không có</td></tr>";
+    tb.innerHTML = "<tr><td colspan='6' class='empty'>Không có</td></tr>";
   } else {
     tb.innerHTML = list.map(row4).join("");
   }
@@ -514,23 +533,32 @@ function searchHS(q) {
       return c !== null && c !== undefined;
     });
     var body = rows.map(function (mon) {
+      var a1 = s.l1[mon];
+      var b1 = s.l2[mon];
+      var c1 = s.l3 ? s.l3[mon] : null;
+      var t3 = tb3calc(a1, b1, c1);
+      var d23 = (s.delta23 && s.delta23[mon] !== undefined) ? s.delta23[mon] : s.delta[mon];
       var r = "<tr><td class='l'>" + mon + "</td>";
-      r += "<td>" + fmt(s.l1[mon]) + "</td>";
-      r += "<td class='big'>" + fmt(s.l2[mon]) + "</td>";
+      r += "<td>" + fmt(a1) + "</td>";
+      r += "<td class='big'>" + fmt(b1) + "</td>";
       if (showL3) {
         var c3 = s.l3 ? s.l3[mon] : null;
         r += "<td class='big'>" + fmt(c3) + "</td>";
+        r += "<td class='big' style='" + tb3color(t3) + "'>" + fmt(t3) + "</td>";
       }
-      r += "<td>" + pill(s.delta[mon]) + "</td>";
+      r += "<td>" + pill(d23) + "</td>";
       r += "<td>" + groupChip(s.l2[mon]) + "</td></tr>";
       return r;
     });
     var c = "<div class='card'><h3>" + esc(s.ten);
     c += " <span class='pill flat'>" + s.lop + "</span></h3>";
+    if (showL3) {
+      c += "<p class='hint'>TB 3 lần = (L1+L2+L3)/3 — chỉ hiện khi đủ 3 đợt. Δ ưu tiên L2→L3.</p>";
+    }
     c += "<div class='tblwrap'><table class='tbl'><thead><tr>";
     c += "<th class='l'>Môn</th><th>L1</th><th>L2</th>";
     if (showL3) {
-      c += "<th>L3</th>";
+      c += "<th>L3</th><th>TB 3 lần</th>";
     }
     c += "<th>Δ</th><th>Nhóm</th>";
     c += "</tr></thead><tbody>" + body.join("") + "</tbody></table></div></div>";
@@ -578,17 +606,20 @@ function exportCSV(whole) {
   var lop = $("selLop").value;
   var mon = $("selMon").value;
   var L = SEC.class_lists[lop][mon];
-  var r2 = [["Nhom", "Ho ten", "L1", "L2", "L3", "Delta", "Delta23"]];
+  var r2 = [["Nhom", "Ho ten", "L1", "L2", "L3", "TB_3lan", "Delta", "Delta23"]];
   L.phudao.forEach(function (x) {
     r2.push(["Phu dao", x.ten, x.l1, x.l2, x.l3 === undefined ? "" : x.l3,
+      tb3calc(x.l1, x.l2, x.l3) === null ? "" : tb3calc(x.l1, x.l2, x.l3),
       x.delta, x.delta23 === undefined ? "" : x.delta23]);
   });
   L.quantam.forEach(function (x) {
     r2.push(["Quan tam", x.ten, x.l1, x.l2, x.l3 === undefined ? "" : x.l3,
+      tb3calc(x.l1, x.l2, x.l3) === null ? "" : tb3calc(x.l1, x.l2, x.l3),
       x.delta, x.delta23 === undefined ? "" : x.delta23]);
   });
   L.boiduong.forEach(function (x) {
     r2.push(["Boi duong", x.ten, x.l1, x.l2, x.l3 === undefined ? "" : x.l3,
+      tb3calc(x.l1, x.l2, x.l3) === null ? "" : tb3calc(x.l1, x.l2, x.l3),
       x.delta, x.delta23 === undefined ? "" : x.delta23]);
   });
   downloadCSV(lop + "_" + mon + ".csv", r2);
