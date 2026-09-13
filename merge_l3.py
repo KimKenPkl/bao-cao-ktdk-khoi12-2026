@@ -11,7 +11,7 @@ from openpyxl import load_workbook
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 DATA = os.path.join(ROOT, "data.json")
-L3FILE = r"C:\Users\LENOVO\Downloads\12A10- KTĐK-LẦN 3.xlsx"
+L3FILE = r"C:\Users\LENOVO\Downloads\12A10- KTĐK-LẦN 3 (1).xlsx"
 MON = "Hóa học"
 
 
