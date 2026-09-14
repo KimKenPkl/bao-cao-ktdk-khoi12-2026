@@ -98,6 +98,9 @@ function fullCover(mon) {
 function renderMeta() {
   var m = PUB.meta;
   var txt = "Sĩ số: " + m.siso_l1 + " HS (L1) • " + m.siso_l2 + " HS (L2)";
+  if (m.siso_l3 !== null && m.siso_l3 !== undefined) {
+    txt += " • " + m.siso_l3 + " HS (L3)";
+  }
   txt += " • " + m.classes.length + " lớp";
   txt += " • Dữ liệu cập nhật: " + (m.cap_nhat || "");
   if (m.lan3) {
@@ -214,7 +217,7 @@ function renderMatrix() {
   MON_CHINH.forEach(function (mon) {
     h += "<th>" + mon + "</th>";
   });
-  h += "<th>Sĩ số L2</th></tr></thead><tbody>";
+  h += "<th>Sĩ số L3</th></tr></thead><tbody>";
   PUB.meta.classes.forEach(function (lop) {
     h += "<tr><td class='l big'>" + lop + "</td>";
     MON_CHINH.forEach(function (mon) {
@@ -243,7 +246,7 @@ function renderMatrix() {
         ov = o;
       }
     });
-    h += "<td>" + (ov ? ov.siso_l2 : "—") + "</td></tr>";
+    h += "<td>" + (ov ? (ov.siso_l3 || ov.siso_l2) : "—") + "</td></tr>";
   });
   h += "</tbody></table>";
   $("matrixWrap").innerHTML = h;
