@@ -1174,6 +1174,49 @@ function spark(a, b, c) {
   return h + "</span>";
 }
 
+/* ---------- 0. Dieu huong tab ---------- */
+
+var TABS = ["tong-quan", "ma-tran", "lop", "khoi", "timkiem", "bang-diem", "to-hop", "so-sanh"];
+var curTab = "tong-quan";
+
+function tabFromHash() {
+  try {
+    var h = (window.location && window.location.hash) ? window.location.hash.replace("#", "") : "";
+    return TABS.indexOf(h) !== -1 ? h : TABS[0];
+  } catch (e) {
+    return TABS[0];
+  }
+}
+
+function switchTab(id) {
+  if (TABS.indexOf(id) === -1) {
+    id = TABS[0];
+  }
+  curTab = id;
+  TABS.forEach(function (t) {
+    var sec = document.getElementById(t);
+    if (sec && sec.style) {
+      sec.style.display = (t === id) ? "" : "none";
+    }
+  });
+  var btns = document.querySelectorAll ? document.querySelectorAll(".navlink[data-tab]") : [];
+  btns.forEach(function (b) {
+    if (!b.classList) {
+      return;
+    }
+    if (b.getAttribute("data-tab") === id) {
+      b.classList.add("on");
+    } else {
+      b.classList.remove("on");
+    }
+  });
+  try {
+    if (window.location && window.location.hash !== "#" + id) {
+      window.location.hash = "#" + id;
+    }
+  } catch (e) {}
+}
+
 function init() {
   renderMeta();
   renderAlerts();
@@ -1224,6 +1267,20 @@ function init() {
   $("btnCsvTh").addEventListener("click", exportToHop);
   $("btnCsvSs").addEventListener("click", exportSoSanh);
   $("btnCsvSo").addEventListener("click", exportSo);
+  var navBtns = document.querySelectorAll ? document.querySelectorAll(".navlink[data-tab]") : [];
+  navBtns.forEach(function (b) {
+    b.addEventListener("click", function () {
+      switchTab(b.getAttribute("data-tab"));
+      if (window.scrollTo) {
+        window.scrollTo(0, 0);
+      }
+    });
+  });
+  if (window.addEventListener) {
+    window.addEventListener("hashchange", function () {
+      switchTab(tabFromHash());
+    });
+  }
   renderGate();
   renderLop();
   renderMonTabs();
@@ -1232,6 +1289,7 @@ function init() {
   renderComboTabs();
   renderToHop();
   renderSoSanh();
+  switchTab(tabFromHash());
 }
 
 if (!PUB) {
