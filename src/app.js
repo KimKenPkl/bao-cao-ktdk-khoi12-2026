@@ -761,20 +761,39 @@ function bdCell(v, isTB) {
   return "<td" + pre + sty + ">" + fmt(v) + "</td>";
 }
 
-function bdAvg(rows, mon, k) {
-  var sum = 0;
-  var n = 0;
+function bdVals(rows, mon, k) {
+  var out = [];
   rows.forEach(function (s) {
     var v = bdVal(s, mon + "|" + k);
     if (v !== null && v !== undefined && v !== "") {
-      sum += Number(v);
-      n += 1;
+      out.push(Number(v));
     }
   });
-  if (!n) {
-    return null;
+  return out;
+}
+
+function bdStatCell(vals, op) {
+  if (!vals.length) {
+    return "<td>—</td>";
   }
-  return Math.round(sum / n * 100) / 100;
+  if (op === "below5") {
+    var c = vals.filter(function (x) {
+      return x < 5;
+    }).length;
+    return "<td>" + c + "</td>";
+  }
+  var v = null;
+  if (op === "avg") {
+    var sum = vals.reduce(function (a, b) {
+      return a + b;
+    }, 0);
+    v = Math.round(sum / vals.length * 100) / 100;
+  } else if (op === "max") {
+    v = Math.max.apply(null, vals);
+  } else if (op === "min") {
+    v = Math.min.apply(null, vals);
+  }
+  return "<td>" + fmt(v) + "</td>";
 }
 
 function renderBangDiem() {
@@ -851,15 +870,16 @@ function renderBangDiem() {
     });
     h += "</tr>";
   });
-  h += "<tr class='avgrow'><td class='c0'>—</td><td class='c1 l'>TB lớp</td>";
-  mons.forEach(function (mon) {
-    ["L1", "L2", "L3"].forEach(function (k) {
-      var av = bdAvg(rows, mon, k);
-      h += av === null ? "<td>—</td>" : "<td>" + fmt(av) + "</td>";
+  [["TB lớp", "avg"], ["Cao nhất", "max"], ["Thấp nhất", "min"], ["Dưới 5", "below5"]].forEach(function (pair) {
+    h += "<tr class='avgrow'><td class='c0'>—</td><td class='c1 l'>" + pair[0] + "</td>";
+    mons.forEach(function (mon) {
+      ["L1", "L2", "L3", "TB"].forEach(function (k) {
+        h += bdStatCell(bdVals(rows, mon, k), pair[1]);
+      });
     });
-    h += "<td>—</td>";
+    h += "</tr>";
   });
-  h += "</tr></tbody>";
+  h += "</tbody>";
   tbl.innerHTML = h;
   var ths = tbl.querySelectorAll("th.sortable");
   ths.forEach(function (th) {
@@ -1017,9 +1037,12 @@ function renderToHop() {
   tbl.innerHTML = h;
   var avg = rows.length ? (Math.round(sum / rows.length * 100) / 100) : null;
   var mx = rows.length ? rows[0].total : null;
+  var below15 = rows.filter(function (r) {
+    return r.total < 15;
+  }).length;
   $("thStat").innerHTML = "Tổ hợp <b>" + curCombo + "</b> (" + mons.join(" + ") + ") • Đợt <b>" + dot
     + "</b> • " + rows.length + " em đủ điểm • Cao nhất <b>" + fmt(mx)
-    + "</b> • TB <b>" + fmt(avg) + "</b>";
+    + "</b> • TB <b>" + fmt(avg) + "</b> • Dưới 15: <b>" + below15 + "</b> em";
 }
 
 function exportToHop() {
