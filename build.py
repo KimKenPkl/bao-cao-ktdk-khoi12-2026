@@ -54,8 +54,8 @@ def main():
     check_js(app, "src/app.js")
 
     password = open(PASS, encoding="utf-8").read().strip()
-    if len(password) < 8:
-        print("LOI: mat khau trong .passwd qua ngan")
+    if len(password) < 7:
+        print("LOI: mat khau trong .passwd qua ngan (toi thieu 7 ky tu)")
         sys.exit(1)
 
     data = json.load(open(DATA, encoding="utf-8"))
