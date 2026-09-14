@@ -24,6 +24,8 @@
     <a class="navlink" href="#khoi">Toàn khối</a>
     <a class="navlink" href="#timkiem">Tra cứu</a>
     <a class="navlink" href="#bang-diem">Bảng điểm</a>
+    <a class="navlink" href="#to-hop">Tổ hợp</a>
+    <a class="navlink" href="#so-sanh">So sánh</a>
     <span class="ver" id="verBadge"></span>
   </div>
 </nav>
@@ -51,7 +53,7 @@
   <section class="block" id="tong-quan">
     <div class="sec-head">
       <span class="sec-num">1</span>
-      <div><h2>Tổng quan toàn khối</h2><p>Điểm trung bình và tỉ lệ dưới trung bình L1 → L2</p></div>
+      <div><h2>Tổng quan toàn khối</h2><p>Điểm trung bình và tỉ lệ dưới trung bình L1 → L2 → L3</p></div>
     </div>
     <div class="grid g4" id="kpiGrid" style="margin-bottom:14px"></div>
     <div class="grid g2" style="margin-bottom:14px">
@@ -70,18 +72,19 @@
       <h3>Chi tiết từng môn</h3>
       <div class="tblwrap"><table class="tbl">
         <thead><tr>
-          <th class="l">Môn</th><th>N L1/L2</th><th>TB L1</th><th>TB L2</th>
-          <th>Chênh lệch</th><th>&lt;5 L1</th><th>&lt;5 L2</th><th>≥8 (L2)</th><th>Xu hướng</th>
+          <th class="l">Môn</th><th>N L1/L2</th><th>TB L1</th><th>TB L2</th><th>TB L3</th>
+          <th>Chênh lệch</th><th>&lt;5 L1</th><th>&lt;5 L2</th><th>&lt;5 L3</th><th>≥8 (L2)</th><th>Xu hướng</th>
         </tr></thead>
         <tbody id="tbKhoi"></tbody>
       </table></div>
+        <div class="no-print" style="margin-top:10px"><button class="btn dark" id="btnCsvSo" type="button">Tải CSV mẫu Sở (toàn khối 3 lần)</button></div>
     </div>
   </section>
 
   <section class="block" id="ma-tran">
     <div class="sec-head">
       <span class="sec-num">2</span>
-      <div><h2>Ma trận lớp × môn</h2><p>Ô = TB L2 • pill Δ so với L1 • nền đỏ = cần họp tổ gấp</p></div>
+      <div><h2>Ma trận lớp × môn</h2><p>Ô = TB mới nhất (ưu tiên L3) • pill Δ so với L1 • nền đỏ = cần họp tổ gấp</p></div>
     </div>
     <div class="card"><div class="tblwrap" id="matrixWrap"></div></div>
   </section>
@@ -157,7 +160,7 @@
       <div class="card edge-red">
         <h3 class="ttl-red">Toàn khối cần phụ đạo<span class="count" id="kPhu"></span></h3>
         <div class="tblwrap scrollbox"><table class="tbl">
-          <thead><tr><th>Lớp</th><th class="l">Học sinh</th><th>L1</th><th>L2</th></tr></thead>
+          <thead><tr><th>Lớp</th><th class="l">Học sinh</th><th>L1</th><th>L2</th><th>L3</th></tr></thead>
           <tbody id="kTbPhu"></tbody>
         </table></div>
         <div class="no-print" style="margin-top:10px">
@@ -167,23 +170,23 @@
       <div class="card edge-green">
         <h3 class="ttl-green">Toàn khối bồi dưỡng<span class="count" id="kBoi"></span></h3>
         <div class="tblwrap scrollbox"><table class="tbl">
-          <thead><tr><th>Lớp</th><th class="l">Học sinh</th><th>L1</th><th>L2</th></tr></thead>
+          <thead><tr><th>Lớp</th><th class="l">Học sinh</th><th>L1</th><th>L2</th><th>L3</th></tr></thead>
           <tbody id="kTbBoi"></tbody>
         </table></div>
       </div>
     </div>
     <div class="grid g2">
       <div class="card">
-        <h3>Top 10 tiến bộ nhất khối</h3>
+        <h3>Top 10 tiến bộ nhất khối <span class="count" id="kTopTangT"></span></h3>
         <div class="tblwrap"><table class="tbl">
-          <thead><tr><th>Lớp</th><th class="l">HS</th><th>L1→L2</th><th>Δ</th></tr></thead>
+          <thead><tr><th>Lớp</th><th class="l">HS</th><th>Diễn biến</th><th>Δ</th></tr></thead>
           <tbody id="kTopTang"></tbody>
         </table></div>
       </div>
       <div class="card">
-        <h3>Top 10 thụt lùi nhất khối</h3>
+        <h3>Top 10 thụt lùi nhất khối <span class="count" id="kTopGiamT"></span></h3>
         <div class="tblwrap"><table class="tbl">
-          <thead><tr><th>Lớp</th><th class="l">HS</th><th>L1→L2</th><th>Δ</th></tr></thead>
+          <thead><tr><th>Lớp</th><th class="l">HS</th><th>Diễn biến</th><th>Δ</th></tr></thead>
           <tbody id="kTopGiam"></tbody>
         </table></div>
       </div>
@@ -216,6 +219,40 @@
       </div>
     </div>
     <div class="card"><div class="tblwrap sheetwrap"><table class="tbl sheet" id="bdTable"></table></div></div>
+  </section>
+
+  <section class="block" id="to-hop">
+    <div class="sec-head">
+      <span class="sec-num">7</span>
+      <div><h2>Xét tổ hợp môn</h2><p>Tổng điểm các khối A00, A01, B00, C03, D01, D07 — xếp hạng theo đợt thi</p></div>
+    </div>
+    <div class="card no-print" style="margin-bottom:14px">
+      <div class="tabs" id="comboTabs" style="margin-bottom:10px"></div>
+      <div class="toolbar">
+        <div class="field"><label>CHỌN LỚP</label><select id="selLopTh"></select></div>
+        <div class="field"><label>ĐỢT THI</label><select id="selDotTh"></select></div>
+        <button class="btn pri" id="btnCsvTh" type="button">Tải CSV tổ hợp</button>
+        <button class="btn" type="button" onclick="window.print()">In danh sách</button>
+        <div class="statline" id="thStat"></div>
+      </div>
+    </div>
+    <div class="card"><div class="tblwrap scrollbox"><table class="tbl" id="thTable"></table></div></div>
+  </section>
+
+  <section class="block" id="so-sanh">
+    <div class="sec-head">
+      <span class="sec-num">8</span>
+      <div><h2>So sánh giữa các lớp</h2><p>Lưới môn × lớp kiểu bảng Sở — mỗi ô: điểm TB + số em và % dưới 5</p></div>
+    </div>
+    <div class="card no-print" style="margin-bottom:14px">
+      <div class="toolbar">
+        <div class="field"><label>ĐỢT THI</label><select id="selDotSs"></select></div>
+        <button class="btn pri" id="btnCsvSs" type="button">Tải CSV so sánh</button>
+        <button class="btn" type="button" onclick="window.print()">In bảng</button>
+        <div class="statline" id="ssStat"></div>
+      </div>
+    </div>
+    <div class="card"><div class="tblwrap"><table class="tbl stickyfirst" id="ssTable"></table></div></div>
   </section>
 
   <section class="block">

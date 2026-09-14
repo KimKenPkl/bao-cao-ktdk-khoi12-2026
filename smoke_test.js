@@ -75,7 +75,9 @@ ok(ids.gateBox.innerHTML.indexOf("password") !== -1, "khoa: hien o khoa");
 ok(ids.tbPhu.innerHTML.indexOf("Anh") === -1, "khoa: list lop khong lo ten");
 ok(ids.kTbPhu.innerHTML.indexOf("12A6") === -1, "khoa: list khoi khong lo ten");
 ok(ids.matrixWrap.innerHTML.indexOf("12A6") !== -1, "public: ma tran van hien");
+ok(ids.kpiGrid.innerHTML.indexOf("TB (L3)") !== -1, "tong quan: KPI len L3");
 ok(ids.bdTable.innerHTML.indexOf("mở khóa ở mục 3") !== -1 && ids.bdStat.innerHTML === "", "bang diem: khoa khi chua mo khoa");
+ok(ids.ssTable.innerHTML.indexOf("12A1") !== -1, "so sanh: cong khai hien luoi lop");
 
 // Giải mã bằng WebCrypto của node (giống trình duyệt) với mật khẩu thật
 async function unlockTest() {

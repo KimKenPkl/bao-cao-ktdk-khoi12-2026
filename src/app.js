@@ -33,6 +33,13 @@ function tb3calc(a, b, c) {
   return Math.round(v * 100) / 100;
 }
 
+function r3(v) {
+  if (v === null || v === undefined) {
+    return null;
+  }
+  return Math.round(v * 1000) / 1000;
+}
+
 function tb3color(v) {
   if (v === null || v === undefined) return "";
   if (v >= 7) return "color:var(--green)";
@@ -104,18 +111,16 @@ function renderAlerts() {
   var s = PUB.subjects_stats;
   var toan = s["Toán"];
   var ly = s["Vật lí"];
-  var gap = (toan.duoi5_l2 / Math.max(1, toan.duoi5_l1)).toFixed(1);
+  var hoa = s["Hóa học"];
   var items = [];
-  items.push("<li><b>Toán:</b> " + toan.duoi5_l2
-    + " em dưới 5 ở L2 (gấp " + gap + " lần L1) — TB "
-    + fmt(toan.tb1) + " → " + fmt(toan.tb2) + ".</li>");
-  items.push("<li><b>Vật lí:</b> giảm sâu nhất ("
-    + fmt(ly.delta) + " điểm), " + ly.duoi5_l2 + " em dưới 5.</li>");
-  items.push("<li><b>Hóa học &amp; KTPL</b> là 2 môn duy nhất "
-    + "<b>tăng điểm</b> (+" + s["Hóa học"].delta
-    + " và +" + s["KTPL"].delta + ").</li>");
-  items.push("<li><b>Sinh học:</b> " + s["Sinh học"].pct_duoi5_l2
-    + "% dưới 5 ở L2 — khối B00 cần phụ đạo gấp.</li>");
+  items.push("<li><b>Toán (L3):</b> TB " + fmt(toan.tb3) + " (" + toan.duoi5_l3
+    + " em dưới 5/" + toan.n3 + " bài) — hồi phục " + pill(toan.delta23) + " so với L2.</li>");
+  items.push("<li><b>Vật lí (L3):</b> TB " + fmt(ly.tb3) + " " + pill(ly.delta23)
+    + " so với L2, còn " + ly.duoi5_l3 + " em dưới 5.</li>");
+  items.push("<li><b>Hóa học (L3):</b> TB " + fmt(hoa.tb3) + " " + pill(hoa.delta23)
+    + " so với L2 — giữ vững nhóm đầu khối.</li>");
+  items.push("<li><b>Sinh học (L3):</b> " + s["Sinh học"].pct_duoi5_l3
+    + "% dưới 5 — khối B00 cần phụ đạo gấp.</li>");
   $("alertBox").innerHTML = items.join("");
 }
 
@@ -124,30 +129,38 @@ function renderKPIs() {
   var defs = ["Toán", "Vật lí", "Hóa học", "Anh Văn"];
   var h = defs.map(function (mon) {
     var t = s[mon];
-    var sub = t.duoi5_l2 + " em <5";
-    if (mon === "Hóa học") {
-      sub = t.gioi_l2 + " em ≥8";
-    }
+    var has3 = t.tb3 !== null && t.tb3 !== undefined;
+    var tag = has3 ? "L3" : "L2";
+    var tb = has3 ? t.tb3 : t.tb2;
+    var d = has3 ? t.delta23 : t.delta;
+    var below = has3 ? t.duoi5_l3 : t.duoi5_l2;
     return "<div class='card kpi'>"
-      + "<div class='k'>" + mon + " TB (L2)</div>"
-      + "<div class='v'>" + fmt(t.tb2) + "</div>"
-      + "<div>" + pill(t.delta) + "</div>"
-      + "<div class='s'>" + sub + "</div></div>";
+      + "<div class='k'>" + mon + " TB (" + tag + ")</div>"
+      + "<div class='v'>" + fmt(tb) + "</div>"
+      + "<div>" + pill(d) + "</div>"
+      + "<div class='s'>" + below + " em <5 (" + tag + ")</div></div>";
   });
   $("kpiGrid").innerHTML = h.join("");
 }
 
-function barRow(label, v1, v2, txt, cls2) {
-  var p1 = v1 === null ? 0 : Math.max(0, Math.min(10, v1)) * 10;
-  var p2 = v2 === null ? 0 : Math.max(0, Math.min(10, v2)) * 10;
+function barRow(label, vals, txt, clss) {
   var h = "<div class='barrow'>";
   h += "<div class='bl'>" + label + "</div>";
   h += "<div class='track'>";
-  h += "<div class='fill l1' style='width:" + p1.toFixed(1) + "%'></div>";
-  h += "<div class='fill " + cls2 + "' style='width:" + p2.toFixed(1) + "%'></div>";
+  vals.forEach(function (v, i) {
+    var p = (v === null || v === undefined) ? 0 : Math.max(0, Math.min(10, v)) * 10;
+    h += "<div class='fill " + clss[i] + "' style='width:" + p.toFixed(1) + "%'></div>";
+  });
   h += "</div>";
   h += "<div class='bv'>" + txt + "</div></div>";
   return h;
+}
+
+function legend3() {
+  return "<div class='legend'><span><span class='dot' "
+    + "style='background:#94a3b8'></span>L1</span><span><span class='dot' "
+    + "style='background:#4f46e5'></span>L2</span><span><span class='dot' "
+    + "style='background:#10b981'></span>L3</span></div>";
 }
 
 function renderCharts() {
@@ -155,19 +168,18 @@ function renderCharts() {
   var mons = MON_ALL.filter(fullCover);
   var avg = mons.map(function (mon) {
     var t = s[mon];
-    return barRow(mon, t.tb1, t.tb2, fmt(t.tb1) + " → " + fmt(t.tb2), "l2");
+    return barRow(mon, [t.tb1, t.tb2, t.tb3],
+      fmt(t.tb1) + " → " + fmt(t.tb2) + " → " + fmt(t.tb3), ["l1", "l2", "l3"]);
   });
-  var leg = "<div class='legend'><span><span class='dot' "
-    + "style='background:#94a3b8'></span>L1</span><span><span class='dot' "
-    + "style='background:#4f46e5'></span>L2</span></div>";
-  $("chartAvg").innerHTML = avg.join("") + leg;
+  $("chartAvg").innerHTML = avg.join("") + legend3();
   var bel = mons.map(function (mon) {
     var t = s[mon];
     var a = t.pct_duoi5_l1 || 0;
     var b = t.pct_duoi5_l2 || 0;
-    return barRow(mon, a, b, a + "% → " + b + "%", "bad");
+    var c = t.pct_duoi5_l3 || 0;
+    return barRow(mon, [a, b, c], a + "% → " + b + "% → " + c + "%", ["l1", "bad", "l3"]);
   });
-  $("chartBelow").innerHTML = bel.join("") + leg;
+  $("chartBelow").innerHTML = bel.join("") + legend3();
 }
 
 function renderTableKhoi() {
@@ -182,10 +194,14 @@ function renderTableKhoi() {
     r += "<td>" + t.n1 + "/" + t.n2 + "</td>";
     r += "<td>" + fmt(t.tb1) + "</td>";
     r += "<td class='big'>" + fmt(t.tb2) + "</td>";
+    r += "<td class='big' style='color:#1d4ed8'>" + fmt(t.tb3) + "</td>";
     r += "<td>" + pill(t.delta) + "</td>";
     r += "<td>" + t.duoi5_l1 + " (" + t.pct_duoi5_l1 + "%)</td>";
     r += "<td class='big' style='color:var(--red)'>" + t.duoi5_l2;
     r += " (" + pct2 + "%)</td>";
+    var d3 = (t.duoi5_l3 === null || t.duoi5_l3 === undefined) ? "—" : t.duoi5_l3;
+    var pct3 = (t.pct_duoi5_l3 === null || t.pct_duoi5_l3 === undefined) ? "—" : t.pct_duoi5_l3;
+    r += "<td>" + d3 + " (" + pct3 + "%)</td>";
     r += "<td class='big' style='color:var(--green)'>" + t.gioi_l2 + "</td>";
     r += "<td>" + trendBadge(t) + "</td></tr>";
     return r;
@@ -203,18 +219,23 @@ function renderMatrix() {
     h += "<tr><td class='l big'>" + lop + "</td>";
     MON_CHINH.forEach(function (mon) {
       var t = (PUB.class_stats[lop] || {})[mon];
-      if (!t || !t.n2) {
+      if (!t || (!t.n2 && !t.n3)) {
         h += "<td style='color:#cbd5e1'>—</td>";
         return;
       }
-      var hot = (t.tb2 !== null && t.tb2 < 5.5) || t.duoi5_l2 >= 10;
+      var use3 = t.n3 && t.tb3 !== null && t.tb3 !== undefined;
+      var tb = use3 ? t.tb3 : t.tb2;
+      var dv = (use3 && t.tb2 !== null && t.tb2 !== undefined) ? r3(t.tb3 - t.tb2) : t.delta;
+      var below = use3 ? t.duoi5_l3 : t.duoi5_l2;
+      var tag = use3 ? "L3" : "L2";
+      var hot = (tb !== null && tb < 5.5) || below >= 10;
       h += hot ? "<td class='hot'>" : "<td>";
-      h += "<span class='big'>" + fmt(t.tb2) + "</span> " + pill(t.delta);
+      h += "<span class='big'>" + fmt(tb) + "</span> <small>" + tag + "</small> " + pill(dv);
       h += "<br><small";
-      if (t.duoi5_l2 > 0) {
+      if (below > 0) {
         h += " style='color:var(--red);font-weight:800'";
       }
-      h += ">" + t.duoi5_l2 + " em &lt;5</small></td>";
+      h += ">" + below + " em &lt;5</small></td>";
     });
     var ov = null;
     PUB.overview_classes.forEach(function (o) {
@@ -253,6 +274,7 @@ function renderGate() {
       renderLop();
       renderKhoi();
       renderBangDiem();
+      renderToHop();
       $("kq").innerHTML = "";
       var q = $("q");
       if (q) {
@@ -342,6 +364,7 @@ function doUnlock(pw) {
       renderLop();
       renderKhoi();
       renderBangDiem();
+      renderToHop();
     })
     .catch(function () {
       fails += 1;
@@ -439,8 +462,42 @@ function rowKhoi(x) {
   var h = "<tr><td class='big'>" + x.lop + "</td>";
   h += "<td class='l nm'>" + esc(x.ten) + "</td>";
   h += "<td>" + fmt(x.l1) + "</td>";
-  h += "<td class='big'>" + fmt(x.l2) + "</td></tr>";
+  h += "<td class='big'>" + fmt(x.l2) + "</td>";
+  h += "<td>" + fmt(x.l3) + "</td></tr>";
   return h;
+}
+
+function d23of(x) {
+  if (x.l3 === null || x.l3 === undefined || x.l2 === null || x.l2 === undefined) {
+    return "";
+  }
+  return Math.round((x.l3 - x.l2) * 100) / 100;
+}
+
+function top23(mon) {
+  var arr = [];
+  SEC.students.forEach(function (s) {
+    var b = s.l2 ? s.l2[mon] : null;
+    var c = s.l3 ? s.l3[mon] : null;
+    if (b === null || b === undefined || c === null || c === undefined) {
+      return;
+    }
+    arr.push({ lop: s.lop, ten: s.ten, l1: b, l2: c, delta: Math.round((c - b) * 100) / 100 });
+  });
+  arr.sort(function (x, y) {
+    return y.delta - x.delta;
+  });
+  return arr;
+}
+
+function topRows(list) {
+  return list.map(function (x) {
+    var h = "<tr><td>" + x.lop + "</td>";
+    h += "<td class='l'>" + esc(x.ten) + "</td>";
+    h += "<td>" + fmt(x.l1) + "→<b>" + fmt(x.l2) + "</b></td>";
+    h += "<td>" + pill(x.delta) + "</td></tr>";
+    return h;
+  }).join("");
 }
 
 function renderKhoi() {
@@ -457,26 +514,33 @@ function renderKhoi() {
   var T = SEC.top_changes[curMonKhoi];
   $("kTbPhu").innerHTML = B.phudao.length
     ? B.phudao.map(rowKhoi).join("")
-    : "<tr><td colspan='4' class='empty'>Không có</td></tr>";
+    : "<tr><td colspan='5' class='empty'>Không có</td></tr>";
   $("kTbBoi").innerHTML = B.boiduong.length
     ? B.boiduong.map(rowKhoi).join("")
-    : "<tr><td colspan='4' class='empty'>Không có</td></tr>";
+    : "<tr><td colspan='5' class='empty'>Không có</td></tr>";
   $("kPhu").textContent = B.phudao.length + " em";
   $("kBoi").textContent = B.boiduong.length + " em";
-  $("kTopTang").innerHTML = T.tang_manh_nhat.map(function (x) {
-    var h = "<tr><td>" + x.lop + "</td>";
-    h += "<td class='l'>" + esc(x.ten) + "</td>";
-    h += "<td>" + fmt(x.l1) + "→<b>" + fmt(x.l2) + "</b></td>";
-    h += "<td>" + pill(x.delta) + "</td></tr>";
-    return h;
-  }).join("");
-  $("kTopGiam").innerHTML = T.giam_manh_nhat.map(function (x) {
-    var h = "<tr><td>" + x.lop + "</td>";
-    h += "<td class='l'>" + esc(x.ten) + "</td>";
-    h += "<td>" + fmt(x.l1) + "→<b>" + fmt(x.l2) + "</b></td>";
-    h += "<td>" + pill(x.delta) + "</td></tr>";
-    return h;
-  }).join("");
+  var T23 = top23(curMonKhoi);
+  var rangeT = "L1→L2";
+  var tangList = T.tang_manh_nhat;
+  var giamList = T.giam_manh_nhat;
+  if (T23.length) {
+    rangeT = "L2→L3";
+    tangList = T23.filter(function (x) {
+      return x.delta > 0;
+    }).slice(0, 10);
+    giamList = T23.filter(function (x) {
+      return x.delta < 0;
+    }).slice(-10).reverse();
+  }
+  $("kTopTangT").textContent = rangeT;
+  $("kTopGiamT").textContent = rangeT;
+  $("kTopTang").innerHTML = tangList.length
+    ? topRows(tangList)
+    : "<tr><td colspan='4' class='empty'>Không có</td></tr>";
+  $("kTopGiam").innerHTML = giamList.length
+    ? topRows(giamList)
+    : "<tr><td colspan='4' class='empty'>Không có</td></tr>";
 }
 
 /* ---------- 4. Tra cứu ---------- */
@@ -549,7 +613,7 @@ function searchHS(q) {
         r += "<td class='big' style='" + tb3color(t3) + "'>" + fmt(t3) + "</td>";
       }
       r += "<td>" + pill(d23) + "</td>";
-      r += "<td>" + groupChip(s.l2[mon]) + "</td></tr>";
+      r += "<td>" + groupChip(s.l2[mon]) + "</td><td>" + spark(a1, b1, c1) + "</td></tr>";
       return r;
     });
     var c = "<div class='card'><h3>" + esc(s.ten);
@@ -562,7 +626,7 @@ function searchHS(q) {
     if (showL3) {
       c += "<th>L3</th><th>TB 3 lần</th>";
     }
-    c += "<th>Δ</th><th>Nhóm</th>";
+    c += "<th>Δ</th><th>Nhóm</th><th>Tiến triển</th>";
     c += "</tr></thead><tbody>" + body.join("") + "</tbody></table></div></div>";
     return c;
   });
@@ -595,12 +659,14 @@ function exportCSV(whole) {
   }
   if (whole) {
     var B = SEC.block_lists[curMonKhoi];
-    var rows = [["Nhom", "Lop", "Ho ten", "L1", "L2", "Delta"]];
+    var rows = [["Nhom", "Lop", "Ho ten", "L1", "L2", "L3", "Delta", "Delta23"]];
     B.phudao.forEach(function (x) {
-      rows.push(["Phu dao", x.lop, x.ten, x.l1, x.l2, x.delta]);
+      rows.push(["Phu dao", x.lop, x.ten, x.l1, x.l2, x.l3 === undefined ? "" : x.l3,
+        x.delta, d23of(x)]);
     });
     B.boiduong.forEach(function (x) {
-      rows.push(["Boi duong", x.lop, x.ten, x.l1, x.l2, x.delta]);
+      rows.push(["Boi duong", x.lop, x.ten, x.l1, x.l2, x.l3 === undefined ? "" : x.l3,
+        x.delta, d23of(x)]);
     });
     downloadCSV("toankhoi_" + curMonKhoi + ".csv", rows);
     return;
@@ -843,6 +909,268 @@ function exportBangDiem() {
   downloadCSV("bangdiem_" + lop + "_3lan.csv", out);
 }
 
+/* ---------- 7. Xet to hop mon ---------- */
+
+var COMBOS = {
+  "A00": ["Toán", "Vật lí", "Hóa học"],
+  "A01": ["Toán", "Vật lí", "Anh Văn"],
+  "B00": ["Toán", "Hóa học", "Sinh học"],
+  "C03": ["Toán", "Ngữ văn", "Lịch sử"],
+  "D01": ["Toán", "Ngữ văn", "Anh Văn"],
+  "D07": ["Toán", "Hóa học", "Anh Văn"]
+};
+var curCombo = "A00";
+
+function dotVal(s, mon, dot) {
+  var v = dot === "L1" ? (s.l1 ? s.l1[mon] : null)
+    : dot === "L2" ? (s.l2 ? s.l2[mon] : null)
+    : (s.l3 ? s.l3[mon] : null);
+  return (v === undefined) ? null : v;
+}
+
+function comboTotal(s, mons, dot) {
+  var sum = 0;
+  for (var i = 0; i < mons.length; i++) {
+    var v = dotVal(s, mons[i], dot);
+    if (v === null || v === "") {
+      return null;
+    }
+    sum += Number(v);
+  }
+  return Math.round(sum * 100) / 100;
+}
+
+function totalColor(t) {
+  if (t >= 24) {
+    return "color:var(--green)";
+  }
+  if (t < 15) {
+    return "color:var(--red)";
+  }
+  return "";
+}
+
+function renderComboTabs() {
+  var h = Object.keys(COMBOS).map(function (k) {
+    var cls = k === curCombo ? "tab on" : "tab";
+    return "<button type='button' class='" + cls + "' data-cb='" + k + "'>" + k + "</button>";
+  });
+  $("comboTabs").innerHTML = h.join("");
+  var btns = $("comboTabs").querySelectorAll("button");
+  btns.forEach(function (b) {
+    b.addEventListener("click", function () {
+      curCombo = b.getAttribute("data-cb");
+      renderComboTabs();
+      renderToHop();
+    });
+  });
+}
+
+function renderToHop() {
+  var tbl = $("thTable");
+  var lopSel = $("selLopTh");
+  var lop = (lopSel && lopSel.value) || "ALL";
+  var dotSel = $("selDotTh");
+  var dot = (dotSel && dotSel.value) || "L3";
+  if (!SEC) {
+    tbl.innerHTML = "<thead><tr><th>Tổ hợp " + curCombo + "</th></tr></thead>"
+      + "<tbody><tr><td class='empty'>Đã khóa — mở khóa ở mục 3 để xem.</td></tr></tbody>";
+    $("thStat").innerHTML = "";
+    return;
+  }
+  var mons = COMBOS[curCombo];
+  var rows = [];
+  SEC.students.forEach(function (s) {
+    if (lop !== "ALL" && s.lop !== lop) {
+      return;
+    }
+    var t = comboTotal(s, mons, dot);
+    if (t === null) {
+      return;
+    }
+    rows.push({ ten: s.ten, lop: s.lop, m: [dotVal(s, mons[0], dot),
+      dotVal(s, mons[1], dot), dotVal(s, mons[2], dot)], total: t });
+  });
+  rows.sort(function (x, y) {
+    return y.total - x.total;
+  });
+  var h = "<thead><tr><th>Hạng</th><th class='l'>Họ tên</th><th>Lớp</th>";
+  mons.forEach(function (mon) {
+    h += "<th>" + mon + "</th>";
+  });
+  h += "<th>Tổng " + dot + "</th></tr></thead><tbody>";
+  if (!rows.length) {
+    h += "<tr><td colspan='7' class='empty'>Không có em nào đủ 3 môn.</td></tr>";
+  }
+  var sum = 0;
+  rows.forEach(function (r, i) {
+    sum += r.total;
+    h += "<tr><td class='big'>" + (i + 1) + "</td>";
+    h += "<td class='l nm'>" + esc(r.ten) + "</td><td>" + r.lop + "</td>";
+    h += "<td>" + fmt(r.m[0]) + "</td><td>" + fmt(r.m[1]) + "</td><td>" + fmt(r.m[2]) + "</td>";
+    h += "<td class='big' style='" + totalColor(r.total) + "'>" + fmt(r.total) + "</td></tr>";
+  });
+  h += "</tbody>";
+  tbl.innerHTML = h;
+  var avg = rows.length ? (Math.round(sum / rows.length * 100) / 100) : null;
+  var mx = rows.length ? rows[0].total : null;
+  $("thStat").innerHTML = "Tổ hợp <b>" + curCombo + "</b> (" + mons.join(" + ") + ") • Đợt <b>" + dot
+    + "</b> • " + rows.length + " em đủ điểm • Cao nhất <b>" + fmt(mx)
+    + "</b> • TB <b>" + fmt(avg) + "</b>";
+}
+
+function exportToHop() {
+  if (!SEC) {
+    return;
+  }
+  var lop = ($("selLopTh").value) || "ALL";
+  var dot = ($("selDotTh").value) || "L3";
+  var mons = COMBOS[curCombo];
+  var head = ["Hang", "Ho ten", "Lop", mons[0], mons[1], mons[2], "Tong " + dot];
+  var out = [head];
+  var rows = [];
+  SEC.students.forEach(function (s) {
+    if (lop !== "ALL" && s.lop !== lop) {
+      return;
+    }
+    var t = comboTotal(s, mons, dot);
+    if (t === null) {
+      return;
+    }
+    rows.push(s);
+  });
+  rows.sort(function (x, y) {
+    return comboTotal(y, mons, dot) - comboTotal(x, mons, dot);
+  });
+  rows.forEach(function (s, i) {
+    out.push([i + 1, s.ten, s.lop, dotVal(s, mons[0], dot),
+      dotVal(s, mons[1], dot), dotVal(s, mons[2], dot), comboTotal(s, mons, dot)]);
+  });
+  downloadCSV("tohop_" + curCombo + "_" + dot + ".csv", out);
+}
+
+/* ---------- 8. So sanh giua cac lop (cong khai) ---------- */
+
+function ssKeys(dot) {
+  if (dot === "L1") {
+    return { n: "n1", tb: "tb1", d: "duoi5_l1" };
+  }
+  if (dot === "L2") {
+    return { n: "n2", tb: "tb2", d: "duoi5_l2" };
+  }
+  return { n: "n3", tb: "tb3", d: "duoi5_l3" };
+}
+
+function renderSoSanh() {
+  var tbl = $("ssTable");
+  var dotSel = $("selDotSs");
+  var dot = (dotSel && dotSel.value) || "L3";
+  var keys = ssKeys(dot);
+  var lops = PUB.meta.classes;
+  var h = "<thead><tr><th class='l'>Môn (" + dot + ")</th>";
+  lops.forEach(function (lop) {
+    h += "<th>" + lop + "</th>";
+  });
+  h += "</tr></thead><tbody>";
+  MON_ALL.forEach(function (mon) {
+    h += "<tr><td class='l'>" + mon + "</td>";
+    lops.forEach(function (lop) {
+      var st = (PUB.class_stats[lop] || {})[mon] || {};
+      var n = st[keys.n];
+      var tb = st[keys.tb];
+      var d = st[keys.d];
+      if (!n || tb === null || tb === undefined) {
+        h += "<td style='color:#cbd5e1'>—</td>";
+        return;
+      }
+      var p = Math.round(d / n * 1000) / 10;
+      var cls = "";
+      if (tb < 5.5 || d >= 10) {
+        cls = " class='hot'";
+      } else if (tb >= 8) {
+        cls = " class='cool'";
+      }
+      h += "<td" + cls + "><span class='big'>" + fmt(tb) + "</span><br><small";
+      if (d > 0) {
+        h += " style='color:var(--red);font-weight:800'";
+      }
+      h += ">" + d + " em &lt;5 (" + p + "%)</small>";
+      h += "<br><small style='color:var(--mut)'>" + n + " bài</small></td>";
+    });
+    h += "</tr>";
+  });
+  h += "</tbody>";
+  tbl.innerHTML = h;
+  $("ssStat").innerHTML = "Đợt <b>" + dot + "</b> • " + lops.length
+    + " lớp • Ô đỏ: TB &lt;5.5 hoặc ≥10 em dưới 5 • Ô xanh: TB ≥8";
+}
+
+function exportSoSanh() {
+  var dot = ($("selDotSs").value) || "L3";
+  var keys = ssKeys(dot);
+  var lops = PUB.meta.classes;
+  var head = ["Mon", "Chi tieu"];
+  lops.forEach(function (lop) {
+    head.push(lop);
+  });
+  var out = [head];
+  MON_ALL.forEach(function (mon) {
+    var rTB = [mon, "TB " + dot];
+    var rD = [mon, "Duoi 5 (em)"];
+    var rP = [mon, "% duoi 5"];
+    lops.forEach(function (lop) {
+      var st = (PUB.class_stats[lop] || {})[mon] || {};
+      var n = st[keys.n];
+      var tb = st[keys.tb];
+      var d = st[keys.d];
+      if (!n || tb === null || tb === undefined) {
+        rTB.push("");
+        rD.push("");
+        rP.push("");
+        return;
+      }
+      rTB.push(tb);
+      rD.push(d);
+      rP.push(Math.round(d / n * 1000) / 10);
+    });
+    out.push(rTB, rD, rP);
+  });
+  downloadCSV("sosanh_lop_" + dot + ".csv", out);
+}
+
+function exportSo() {
+  var s = PUB.subjects_stats;
+  var head = ["MON", "DTB L1", "SL L1", "% duoi5 L1", "DTB L2", "SL L2",
+    "% duoi5 L2", "DTB L3", "SL L3", "% duoi5 L3"];
+  var rows = [head];
+  MON_ALL.forEach(function (mon) {
+    var t = s[mon];
+    if (!t) {
+      return;
+    }
+    rows.push([mon, t.tb1, t.n1, t.pct_duoi5_l1, t.tb2, t.n2, t.pct_duoi5_l2,
+      (t.tb3 === undefined ? null : t.tb3), (t.n3 === undefined ? null : t.n3),
+      (t.pct_duoi5_l3 === undefined ? null : t.pct_duoi5_l3)]);
+  });
+  downloadCSV("tonghop_SoGD_L1-L3.csv", rows);
+}
+
+function spark(a, b, c) {
+  var vals = [a, b, c];
+  var L = ["L1", "L2", "L3"];
+  var h = "<span class='spark'>";
+  vals.forEach(function (v, i) {
+    if (v === null || v === undefined || v === "") {
+      h += "<i title='" + L[i] + ": —' style='height:3px;background:#e2e8f0'></i>";
+    } else {
+      var col = v < 5 ? "#ef4444" : (v >= 8 ? "#22c55e" : "#6366f1");
+      h += "<i title='" + L[i] + ": " + v + "' style='height:"
+        + Math.max(8, v * 10) + "%;background:" + col + "'></i>";
+    }
+  });
+  return h + "</span>";
+}
+
 function init() {
   renderMeta();
   renderAlerts();
@@ -876,11 +1204,31 @@ function init() {
   $("selLopBd").addEventListener("change", renderBangDiem);
   $("bdQ").addEventListener("input", renderBangDiem);
   $("btnCsvBd").addEventListener("click", exportBangDiem);
+  $("selLopTh").innerHTML = "<option value='ALL'>Tất cả lớp</option>" + PUB.meta.classes.map(function (c) {
+    return "<option>" + c + "</option>";
+  }).join("");
+  $("selDotTh").innerHTML = ["L1", "L2", "L3"].map(function (d) {
+    return "<option>" + d + "</option>";
+  }).join("");
+  $("selDotTh").value = "L3";
+  $("selDotSs").innerHTML = ["L1", "L2", "L3"].map(function (d) {
+    return "<option>" + d + "</option>";
+  }).join("");
+  $("selDotSs").value = "L3";
+  $("selLopTh").addEventListener("change", renderToHop);
+  $("selDotTh").addEventListener("change", renderToHop);
+  $("selDotSs").addEventListener("change", renderSoSanh);
+  $("btnCsvTh").addEventListener("click", exportToHop);
+  $("btnCsvSs").addEventListener("click", exportSoSanh);
+  $("btnCsvSo").addEventListener("click", exportSo);
   renderGate();
   renderLop();
   renderMonTabs();
   renderKhoi();
   renderBangDiem();
+  renderComboTabs();
+  renderToHop();
+  renderSoSanh();
 }
 
 if (!PUB) {
