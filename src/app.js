@@ -252,6 +252,7 @@ function renderGate() {
       renderGate();
       renderLop();
       renderKhoi();
+      renderBangDiem();
       $("kq").innerHTML = "";
       var q = $("q");
       if (q) {
@@ -340,6 +341,7 @@ function doUnlock(pw) {
       renderGate();
       renderLop();
       renderKhoi();
+      renderBangDiem();
     })
     .catch(function () {
       fails += 1;
@@ -627,6 +629,220 @@ function exportCSV(whole) {
 
 /* ---------- Khởi động ---------- */
 
+/* ---------- 6. Bang diem 3 lan kieu Sheets ---------- */
+
+var bdSort = { key: "ten", dir: 1 };
+
+function bdVal(s, key) {
+  if (key === "ten") {
+    return s.ten;
+  }
+  var p = key.split("|");
+  var mon = p[0];
+  var k = p[1];
+  var v = null;
+  if (k === "L1") {
+    v = s.l1 ? s.l1[mon] : null;
+  } else if (k === "L2") {
+    v = s.l2 ? s.l2[mon] : null;
+  } else if (k === "L3") {
+    v = s.l3 ? s.l3[mon] : null;
+  } else {
+    var a = s.l1 ? s.l1[mon] : null;
+    var b = s.l2 ? s.l2[mon] : null;
+    var c = s.l3 ? s.l3[mon] : null;
+    v = tb3calc(a, b, c);
+  }
+  return (v === undefined) ? null : v;
+}
+
+function bdSubjects(lop) {
+  var seen = {};
+  SEC.students.forEach(function (s) {
+    if (s.lop !== lop) {
+      return;
+    }
+    PUB.meta.subjects.forEach(function (mon) {
+      var a = s.l1 ? s.l1[mon] : null;
+      var b = s.l2 ? s.l2[mon] : null;
+      var c = s.l3 ? s.l3[mon] : null;
+      var has = (a !== null && a !== undefined)
+        || (b !== null && b !== undefined)
+        || (c !== null && c !== undefined);
+      if (has) {
+        seen[mon] = 1;
+      }
+    });
+  });
+  return PUB.meta.subjects.filter(function (m) {
+    return seen[m];
+  });
+}
+
+function bdCell(v, isTB) {
+  if (v === null || v === undefined || v === "") {
+    return "<td>—</td>";
+  }
+  var cls = v < 5 ? "neg" : (v >= 8 ? "good" : "");
+  if (isTB) {
+    cls += " big";
+  }
+  var pre = cls ? " class='" + cls.trim() + "'" : "";
+  var sty = isTB ? " style='" + tb3color(v) + "'" : "";
+  return "<td" + pre + sty + ">" + fmt(v) + "</td>";
+}
+
+function bdAvg(rows, mon, k) {
+  var sum = 0;
+  var n = 0;
+  rows.forEach(function (s) {
+    var v = bdVal(s, mon + "|" + k);
+    if (v !== null && v !== undefined && v !== "") {
+      sum += Number(v);
+      n += 1;
+    }
+  });
+  if (!n) {
+    return null;
+  }
+  return Math.round(sum / n * 100) / 100;
+}
+
+function renderBangDiem() {
+  var tbl = $("bdTable");
+  var sel = $("selLopBd");
+  var lop = (sel && sel.value) || PUB.meta.classes[0];
+  if (!SEC) {
+    tbl.innerHTML = "<thead><tr><th>Bảng điểm</th></tr></thead>"
+      + "<tbody><tr><td class='empty'>Đã khóa — mở khóa ở mục 3 để xem.</td></tr></tbody>";
+    $("bdStat").innerHTML = "";
+    return;
+  }
+  var mons = bdSubjects(lop);
+  var qEl = $("bdQ");
+  var q = normStr(((qEl && qEl.value) || "").trim());
+  var rows = SEC.students.filter(function (s) {
+    if (s.lop !== lop) {
+      return false;
+    }
+    if (q && normStr(s.ten).indexOf(q) === -1) {
+      return false;
+    }
+    return true;
+  });
+  var sk = bdSort.key;
+  var sd = bdSort.dir;
+  rows.sort(function (x, y) {
+    var a = bdVal(x, sk);
+    var b = bdVal(y, sk);
+    var an = (a === null || a === undefined);
+    var bn = (b === null || b === undefined);
+    if (an && bn) {
+      return 0;
+    }
+    if (an) {
+      return 1;
+    }
+    if (bn) {
+      return -1;
+    }
+    if (a < b) {
+      return -1 * sd;
+    }
+    if (a > b) {
+      return 1 * sd;
+    }
+    return 0;
+  });
+  var arrow = sd === 1 ? " sorted-asc" : " sorted-desc";
+  var h = "<thead><tr><th class='c0'>STT</th>";
+  h += "<th class='c1 l sortable" + (sk === "ten" ? arrow : "") + "' data-k='ten'>Họ tên</th>";
+  mons.forEach(function (mon, i) {
+    var g = " g" + (i % 2);
+    ["L1", "L2", "L3", "TB"].forEach(function (k) {
+      var key = mon + "|" + k;
+      var cls = "sortable" + g + (sk === key ? arrow : "");
+      h += "<th class='" + cls + "' data-k='" + key + "'>" + mon + " " + k + "</th>";
+    });
+  });
+  h += "</tr></thead><tbody>";
+  var span = 2 + mons.length * 4;
+  if (!rows.length) {
+    h += "<tr><td colspan='" + span + "' class='empty'>Không có học sinh nào.</td></tr>";
+  }
+  rows.forEach(function (s, idx) {
+    h += "<tr><td class='c0'>" + (idx + 1) + "</td>";
+    h += "<td class='c1 l nm'>" + esc(s.ten) + "</td>";
+    mons.forEach(function (mon) {
+      var a = s.l1 ? s.l1[mon] : null;
+      var b = s.l2 ? s.l2[mon] : null;
+      var c = s.l3 ? s.l3[mon] : null;
+      var t = tb3calc(a, b, c);
+      h += bdCell(a, false) + bdCell(b, false) + bdCell(c, false) + bdCell(t, true);
+    });
+    h += "</tr>";
+  });
+  h += "<tr class='avgrow'><td class='c0'>—</td><td class='c1 l'>TB lớp</td>";
+  mons.forEach(function (mon) {
+    ["L1", "L2", "L3"].forEach(function (k) {
+      var av = bdAvg(rows, mon, k);
+      h += av === null ? "<td>—</td>" : "<td>" + fmt(av) + "</td>";
+    });
+    h += "<td>—</td>";
+  });
+  h += "</tr></tbody>";
+  tbl.innerHTML = h;
+  var ths = tbl.querySelectorAll("th.sortable");
+  ths.forEach(function (th) {
+    th.addEventListener("click", function () {
+      var k = th.getAttribute("data-k");
+      if (bdSort.key === k) {
+        bdSort.dir = -bdSort.dir;
+      } else {
+        bdSort.key = k;
+        bdSort.dir = 1;
+      }
+      renderBangDiem();
+    });
+  });
+  $("bdStat").innerHTML = "Lớp <b>" + lop + "</b> • " + rows.length + " em • "
+    + mons.length + " môn có điểm • Click tiêu đề cột để sắp xếp";
+}
+
+function exportBangDiem() {
+  if (!SEC) {
+    return;
+  }
+  var sel = $("selLopBd");
+  var lop = (sel && sel.value) || PUB.meta.classes[0];
+  var mons = bdSubjects(lop);
+  var head = ["STT", "Ho ten"];
+  mons.forEach(function (mon) {
+    head.push(mon + " L1", mon + " L2", mon + " L3", mon + " TB");
+  });
+  var out = [head];
+  var i = 0;
+  SEC.students.forEach(function (s) {
+    if (s.lop !== lop) {
+      return;
+    }
+    i += 1;
+    var r = [i, s.ten];
+    mons.forEach(function (mon) {
+      var a = s.l1 ? s.l1[mon] : null;
+      var b = s.l2 ? s.l2[mon] : null;
+      var c = s.l3 ? s.l3[mon] : null;
+      var t = tb3calc(a, b, c);
+      r.push(a === undefined || a === null ? "" : a);
+      r.push(b === undefined || b === null ? "" : b);
+      r.push(c === undefined || c === null ? "" : c);
+      r.push(t === null ? "" : t);
+    });
+    out.push(r);
+  });
+  downloadCSV("bangdiem_" + lop + "_3lan.csv", out);
+}
+
 function init() {
   renderMeta();
   renderAlerts();
@@ -653,10 +869,18 @@ function init() {
   $("q").addEventListener("input", function (e) {
     searchHS(e.target.value);
   });
+  $("selLopBd").innerHTML = PUB.meta.classes.map(function (c) {
+    return "<option>" + c + "</option>";
+  }).join("");
+  $("selLopBd").value = "12A10";
+  $("selLopBd").addEventListener("change", renderBangDiem);
+  $("bdQ").addEventListener("input", renderBangDiem);
+  $("btnCsvBd").addEventListener("click", exportBangDiem);
   renderGate();
   renderLop();
   renderMonTabs();
   renderKhoi();
+  renderBangDiem();
 }
 
 if (!PUB) {

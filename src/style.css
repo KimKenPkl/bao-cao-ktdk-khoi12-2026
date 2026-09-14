@@ -216,8 +216,44 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; min-width
 .gate input[type="password"]:focus { outline: 2px solid var(--brand); border-color: var(--brand); }
 .hintline { font-size: 12.5px; color: var(--mut); }
 
+.field.grow { flex: 1; min-width: 200px; }
+.field input[type="search"] {
+  font-family: inherit; font-size: 14px; font-weight: 700;
+  border: 1.5px solid var(--line); border-radius: 12px; padding: 10px 12px;
+  background: #fff; color: var(--ink); width: 100%;
+}
+.field input[type="search"]:focus { outline: 2px solid var(--brand); border-color: var(--brand); }
+
+/* Bang diem kieu Sheets: cot ten co dinh, o mau theo diem */
+.sheetwrap { max-height: 560px; overflow: auto; }
+table.sheet { min-width: 100%; font-size: 13px; }
+.sheet thead th { z-index: 3; }
+.sheet thead th.g0 { background: #1e3a5f; }
+.sheet thead th.g1 { background: #3b2e7a; }
+.sheet th.sortable { cursor: pointer; }
+.sheet th.sorted-asc::after { content: " ▲"; }
+.sheet th.sorted-desc::after { content: " ▼"; }
+.sheet td.c0, .sheet th.c0 {
+  position: sticky; left: 0; z-index: 2; background: #fff;
+  width: 46px; min-width: 46px; max-width: 46px;
+}
+.sheet td.c1, .sheet th.c1 {
+  position: sticky; left: 46px; z-index: 2; background: #fff;
+  min-width: 168px; box-shadow: 2px 0 0 var(--line);
+}
+.sheet thead th.c0, .sheet thead th.c1 { z-index: 4; background: var(--navy); box-shadow: 2px 2px 0 rgba(0, 0, 0, .2); }
+.sheet tbody td { border-right: 1px solid #eef2f7; }
+.sheet td.neg { background: #fee2e2; color: #b91c1c; font-weight: 800; }
+.sheet td.good { background: #dcfce7; color: #15803d; font-weight: 800; }
+.sheet tr.avgrow td { background: #f1f5f9; font-weight: 800; border-top: 2px solid var(--navy); }
+
 footer.site { text-align: center; color: var(--mut); font-size: 12px; padding: 8px 0 34px; }
 .empty { text-align: center; color: var(--mut); padding: 14px; font-size: 13px; }
+
+@media print {
+  .sheetwrap { max-height: none; overflow: visible; }
+  table.sheet { font-size: 11px; }
+}
 
 @media print {
   .topnav, .no-print { display: none !important; }

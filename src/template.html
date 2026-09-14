@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex,nofollow">
-<meta name="description" content="Báo cáo so sánh điểm KTĐK Lần 1 và Lần 2 khối 12, THPT Chi Lăng. Danh sách phụ đạo và bồi dưỡng từng lớp, từng môn.">
-<title>Báo cáo KTĐK L1–L2 | Khối 12 – THPT Chi Lăng</title>
+<meta name="description" content="Báo cáo so sánh điểm KTĐK Lần 1, Lần 2 và Lần 3 khối 12, THPT Chi Lăng. Danh sách phụ đạo và bồi dưỡng từng lớp, từng môn.">
+<title>Báo cáo KTĐK L1–L2–L3 | Khối 12 – THPT Chi Lăng</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -23,6 +23,7 @@
     <a class="navlink" href="#lop">Từng lớp</a>
     <a class="navlink" href="#khoi">Toàn khối</a>
     <a class="navlink" href="#timkiem">Tra cứu</a>
+    <a class="navlink" href="#bang-diem">Bảng điểm</a>
     <span class="ver" id="verBadge"></span>
   </div>
 </nav>
@@ -31,8 +32,8 @@
   <div class="wrap">
     <span class="kicker">SỞ GD&amp;ĐT GIA LAI • TRƯỜNG THPT CHI LĂNG</span>
     <span class="kicker gold">KHỐI 12 • NĂM HỌC 2026–2027</span>
-    <h1>Báo cáo so sánh điểm KTĐK<br>Lần 1 <span class="vs">vs</span> Lần 2 — Danh sách phụ đạo / bồi dưỡng</h1>
-    <p class="sub">Tổng hợp tình hình học tập từng lớp và toàn khối. Tự động liệt kê HS cần <b class="r">phụ đạo (&lt;5)</b>, cần <b class="y">quan tâm (5–6.5)</b> và <b class="g">bồi dưỡng (≥8)</b> theo từng môn. Đã có <b>TB 3 lần = (L1+L2+L3)/3</b> cho Toán–Hóa–Sinh 12A10.</p>
+    <h1>Báo cáo so sánh điểm KTĐK<br>Lần 1 <span class="vs">•</span> Lần 2 <span class="vs">•</span> Lần 3 — Phụ đạo / bồi dưỡng</h1>
+    <p class="sub">Tổng hợp tình hình học tập từng lớp và toàn khối. Tự động liệt kê HS cần <b class="r">phụ đạo (&lt;5)</b>, cần <b class="y">quan tâm (5–6.5)</b> và <b class="g">bồi dưỡng (≥8)</b> theo từng môn. Đã có <b>TB 3 lần = (L1+L2+L3)/3</b> cho toàn khối.</p>
     <p class="meta" id="metaLine">Đang khởi tạo…</p>
   </div>
 </header>
@@ -198,6 +199,23 @@
       <input id="q" type="search" placeholder="Ví dụ: bao nguyen, minh duc…" autocomplete="off">
     </div>
     <div class="grid g2" id="kq"></div>
+  </section>
+
+  <section class="block" id="bang-diem">
+    <div class="sec-head">
+      <span class="sec-num">6</span>
+      <div><h2>Bảng điểm cả 3 lần</h2><p>Lưới kiểu Sheets — cố định cột tên, click tiêu đề cột để sắp xếp</p></div>
+    </div>
+    <div class="card no-print" style="margin-bottom:14px">
+      <div class="toolbar">
+        <div class="field"><label>CHỌN LỚP</label><select id="selLopBd"></select></div>
+        <div class="field grow"><label>TÌM TÊN</label><input id="bdQ" type="search" placeholder="Gõ tên để lọc…" autocomplete="off"></div>
+        <button class="btn pri" id="btnCsvBd" type="button">Tải CSV bảng này</button>
+        <button class="btn" type="button" onclick="window.print()">In bảng điểm</button>
+        <div class="statline" id="bdStat"></div>
+      </div>
+    </div>
+    <div class="card"><div class="tblwrap sheetwrap"><table class="tbl sheet" id="bdTable"></table></div></div>
   </section>
 
   <section class="block">
