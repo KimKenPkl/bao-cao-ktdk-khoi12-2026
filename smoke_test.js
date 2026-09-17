@@ -96,7 +96,7 @@ async function unlockTest() {
   );
   const plain = await crypto.subtle.decrypt({ name: "AES-GCM", iv: b64(LOCK.iv) }, key, b64(LOCK.ct));
   const sec = JSON.parse(new TextDecoder().decode(plain));
-  ok(sec.class_lists["12A10"]["Toán"].phudao.length === 15, "giai ma: du 15 em 12A10 Toan");
+  ok(sec.class_lists["12A10"]["Toán"].phudao.length === 16, "giai ma: du 16 em 12A10 Toan");
   ok(sec.students.length >= 460, "giai ma: du danh sach HS");
   // sai mật khẩu phải thất bại
   try {
