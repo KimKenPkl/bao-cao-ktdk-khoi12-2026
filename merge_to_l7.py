@@ -557,7 +557,7 @@ def main():
         "THPT Chi Lang - Khoi 12 - Diem KTDK Lan 4 - HK1 2026-2027 (1).xlsx",
         "THPT Chi Lang - Khoi 12 - Diem KTDK Lan 5 - HK1 2026-2027 (2).xlsx",
         "THPT Chi Lang - Khoi 12 - Diem KTDK Lan 6 - HK1 2026-2027.xlsx",
-        "2026-2027- 12A10 Bảng điểm định kì hằng tuần  (6).xlsx (L1–L7 chuẩn 33 HS)",
+        "2026-2027- 12A10 Bảng điểm định kì hằng tuần  (7).xlsx (L1–L7 chuẩn 33 HS)",
     ]:
         if src_name not in meta["nguon"]:
             meta["nguon"].append(src_name)
