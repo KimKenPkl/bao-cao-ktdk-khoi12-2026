@@ -1,7 +1,7 @@
-// Smoke test v2: public render không lộ tên + giải mã AES kiểm tra interop.
+// Smoke test v3 (L1 -> L7): public render không lộ tên + giải mã AES kiểm tra interop.
 const fs = require("fs");
 const path = require("path");
-const ROOT = "D:/bao-cao-ktdk-khoi12";
+const ROOT = __dirname;
 
 function makeElem(id) {
   return {
@@ -70,13 +70,14 @@ function ok(cond, label) {
   }
 }
 
-ok(ids.tbKhoi.innerHTML.indexOf("138") !== -1, "public: bang khoi co so");
+ok(ids.tbKhoi.innerHTML.indexOf("6.48") !== -1, "public: bang khoi co TB Toan L6 (6.48)");
+ok(ids.tbKhoi.innerHTML.indexOf("5.44") !== -1, "public: bang khoi co TB Toan L7 (5.44)");
 ok(ids.gateBox.innerHTML.indexOf("password") !== -1, "khoa: hien o khoa");
 ok(ids.tbPhu.innerHTML.indexOf("Anh") === -1, "khoa: list lop khong lo ten");
 ok(ids.kTbPhu.innerHTML.indexOf("12A6") === -1, "khoa: list khoi khong lo ten");
-ok(ids.matrixWrap.innerHTML.indexOf("12A6") !== -1, "public: ma tran van hien");
-ok(ids.matrixWrap.innerHTML.indexOf("L3") !== -1, "public: ma tran hien si so L3");
-ok(ids.kpiGrid.innerHTML.indexOf("TB (L3)") !== -1, "tong quan: KPI len L3");
+ok(ids.matrixWrap.innerHTML.indexOf("12A10") !== -1, "public: ma tran van hien");
+ok(ids.matrixWrap.innerHTML.indexOf("L7") !== -1 && ids.matrixWrap.innerHTML.indexOf("L6") !== -1, "public: ma tran hien L6 va L7");
+ok(ids.kpiGrid.innerHTML.indexOf("L6 / L7") !== -1, "tong quan: KPI len L6 / L7");
 ok(ids.bdTable.innerHTML.indexOf("mở khóa ở mục 3") !== -1 && ids.bdStat.innerHTML === "", "bang diem: khoa khi chua mo khoa");
 ok(ids.ssTable.innerHTML.indexOf("12A1") !== -1, "so sanh: cong khai hien luoi lop");
 
@@ -96,8 +97,10 @@ async function unlockTest() {
   );
   const plain = await crypto.subtle.decrypt({ name: "AES-GCM", iv: b64(LOCK.iv) }, key, b64(LOCK.ct));
   const sec = JSON.parse(new TextDecoder().decode(plain));
-  ok(sec.class_lists["12A10"]["Toán"].phudao.length === 16, "giai ma: du 16 em 12A10 Toan");
-  ok(sec.students.length >= 460, "giai ma: du danh sach HS");
+  ok(sec.class_lists["12A10"]["Toán"].phudao.length === 10, "giai ma: du 10 em 12A10 Toan <5 o L7");
+  const a10_hs = sec.students.filter((s) => s.lop === "12A10");
+  ok(a10_hs.length === 33 && a10_hs.every((s) => s.l7 && s.l7["Toán"] !== null), "giai ma: 12A10 du 33 em co diem L7");
+  ok(sec.students.length >= 460, "giai ma: du danh sach HS toan khoi");
   // sai mật khẩu phải thất bại
   try {
     const bk2 = await crypto.subtle.importKey("raw", enc.encode("sai-mat-khau"), "PBKDF2", false, ["deriveKey"]);

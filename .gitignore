@@ -1,5 +1,7 @@
 # Dữ liệu gốc có tên HS — chỉ giữ local, không đưa lên GitHub
 data.json
+data.json.bak*
+data_base_l1_l3.json
 .passwd
 .opencode/
 __pycache__/

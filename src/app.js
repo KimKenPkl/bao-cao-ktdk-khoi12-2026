@@ -1,4 +1,4 @@
-/* Báo cáo KTĐK Khối 12 — logic hiển thị, có lớp bảo mật.
+/* Báo cáo KTĐK Khối 12 (L1 -> L7) — logic hiển thị, có lớp bảo mật.
    Công khai: số liệu tổng hợp (window.__PUB__).
    Tên HS nằm trong khối mã hóa (window.__LOCK__), chỉ mở bằng mật khẩu. */
 (function () {
@@ -13,6 +13,7 @@ var lockUntil = 0;
 var MON_CHINH = ["Toán", "Vật lí", "Hóa học", "Sinh học", "Anh Văn"];
 var MON_ALL = ["Toán", "Vật lí", "Hóa học", "Sinh học", "Anh Văn",
   "Tin học", "Lịch sử", "KTPL", "Ngữ văn"];
+var DOTS = ["L1", "L2", "L3", "L4", "L5", "L6", "L7"];
 
 function $(id) {
   return document.getElementById(id);
@@ -25,12 +26,20 @@ function fmt(v) {
   return Number(v).toFixed(2).replace(/\.00$/, "");
 }
 
-function tb3calc(a, b, c) {
-  if (a === null || a === undefined || a === "") return null;
-  if (b === null || b === undefined || b === "") return null;
-  if (c === null || c === undefined || c === "") return null;
-  var v = (Number(a) + Number(b) + Number(c)) / 3;
-  return Math.round(v * 100) / 100;
+function tbAllCalc(s, mon) {
+  var vals = [];
+  for (var k = 1; k <= 7; k++) {
+    var lk = "l" + k;
+    var v = s[lk] ? s[lk][mon] : null;
+    if (v !== null && v !== undefined && v !== "") {
+      vals.push(Number(v));
+    }
+  }
+  if (!vals.length) {
+    return null;
+  }
+  var sum = vals.reduce(function (a, b) { return a + b; }, 0);
+  return Math.round(sum / vals.length * 100) / 100;
 }
 
 function r3(v) {
@@ -62,50 +71,46 @@ function pill(d) {
 }
 
 function trendBadge(t) {
-  if (t.delta === null || t.delta === undefined) {
-    return '<span class="pill flat">chỉ thi L1</span>';
+  var d = (t.delta56 !== null && t.delta56 !== undefined) ? t.delta56 : t.delta;
+  if (d === null || d === undefined) {
+    return '<span class="pill flat">chưa đủ đợt</span>';
   }
-  if (t.delta > 0) {
+  if (d > 0) {
     return '<span class="pill up">cải thiện</span>';
   }
-  if (t.delta < 0) {
+  if (d < 0) {
     return '<span class="pill down">giảm</span>';
   }
   return '<span class="pill flat">ổn định</span>';
 }
 
 function coverBadge(t) {
-  if (t.tb2 === null || t.tb2 === undefined) {
-    return "";
-  }
-  if (t.n1 > 0 && t.n2 < 0.7 * t.n1) {
-    return ' <span class="pill warn">L2 mới có '
-      + t.n2 + "/" + t.n1 + " bài</span>";
+  if (t.n7 && t.n7 > 0 && t.n7 < t.n6) {
+    return ' <span class="pill warn">L7: ' + t.n7 + " bài (12A10)</span>";
   }
   return "";
 }
 
 function fullCover(mon) {
   var t = PUB.subjects_stats[mon];
-  if (!t || t.tb2 === null || t.tb2 === undefined) {
+  if (!t || t.tb6 === null || t.tb6 === undefined) {
     return false;
   }
-  return t.n2 >= 0.7 * t.n1;
+  return t.n6 >= 10;
 }
 
 /* ---------- 1. Phần công khai ---------- */
 
 function renderMeta() {
   var m = PUB.meta;
-  var txt = "Sĩ số: " + m.siso_l1 + " HS (L1) • " + m.siso_l2 + " HS (L2)";
-  if (m.siso_l3 !== null && m.siso_l3 !== undefined) {
-    txt += " • " + m.siso_l3 + " HS (L3)";
-  }
+  var txt = "Sĩ số các đợt: L1 " + m.siso_l1 + " • L2 " + m.siso_l2
+    + " • L3 " + (m.siso_l3 || "—")
+    + " • L4 " + (m.siso_l4 || "—")
+    + " • L5 " + (m.siso_l5 || "—")
+    + " • L6 " + (m.siso_l6 || "—")
+    + " • L7 " + (m.siso_l7 || "—") + " HS (12A10 đã lên điểm)";
   txt += " • " + m.classes.length + " lớp";
-  txt += " • Dữ liệu cập nhật: " + (m.cap_nhat || "");
-  if (m.lan3) {
-    txt += " • " + m.lan3;
-  }
+  txt += " • Cập nhật: " + (m.cap_nhat || "");
   $("metaLine").textContent = txt;
   $("verBadge").textContent = "Bản " + (m.cap_nhat || "");
 }
@@ -115,33 +120,34 @@ function renderAlerts() {
   var toan = s["Toán"];
   var ly = s["Vật lí"];
   var hoa = s["Hóa học"];
+  var sinh = s["Sinh học"];
   var items = [];
-  items.push("<li><b>Toán (L3):</b> TB " + fmt(toan.tb3) + " (" + toan.duoi5_l3
-    + " em dưới 5/" + toan.n3 + " bài) — hồi phục " + pill(toan.delta23) + " so với L2.</li>");
-  items.push("<li><b>Vật lí (L3):</b> TB " + fmt(ly.tb3) + " " + pill(ly.delta23)
-    + " so với L2, còn " + ly.duoi5_l3 + " em dưới 5.</li>");
-  items.push("<li><b>Hóa học (L3):</b> TB " + fmt(hoa.tb3) + " " + pill(hoa.delta23)
-    + " so với L2 — giữ vững nhóm đầu khối.</li>");
-  items.push("<li><b>Sinh học (L3):</b> " + s["Sinh học"].pct_duoi5_l3
-    + "% dưới 5 — khối B00 cần phụ đạo gấp.</li>");
+  items.push("<li><b>Toán (L6 toàn khối &amp; L7 12A10):</b> L6 đạt TB <b>" + fmt(toan.tb6)
+    + "</b> (" + toan.duoi5_l6 + " em &lt;5/" + toan.n6 + " bài, hồi phục " + pill(toan.delta56)
+    + " so với L5) • L7 (12A10): TB <b>" + fmt(toan.tb7) + "</b> (" + toan.duoi5_l7 + "/33 em &lt;5).</li>");
+  items.push("<li><b>Vật lí (L6):</b> TB <b>" + fmt(ly.tb6) + "</b> " + pill(ly.delta56)
+    + " so với L5, chỉ còn " + ly.duoi5_l6 + "/" + ly.n6 + " bài dưới 5 (" + ly.gioi_l6 + " bài ≥8).</li>");
+  items.push("<li><b>Hóa học (L6 toàn khối &amp; L7 12A10):</b> L6 đạt TB <b>" + fmt(hoa.tb6)
+    + "</b> (" + hoa.gioi_l6 + " bài ≥8) • L7 (12A10): TB <b>" + fmt(hoa.tb7)
+    + "</b> (chỉ " + hoa.duoi5_l7 + " em &lt;5).</li>");
+  items.push("<li><b>Sinh học (L6 &amp; L7 12A10):</b> L6 đạt TB <b>" + fmt(sinh.tb6)
+    + "</b> • L7 (12A10): TB <b>" + fmt(sinh.tb7) + "</b> (" + sinh.duoi5_l7 + "/33 em &lt;5).</li>");
   $("alertBox").innerHTML = items.join("");
 }
 
 function renderKPIs() {
   var s = PUB.subjects_stats;
-  var defs = ["Toán", "Vật lí", "Hóa học", "Anh Văn"];
+  var defs = ["Toán", "Vật lí", "Hóa học", "Sinh học"];
   var h = defs.map(function (mon) {
     var t = s[mon];
-    var has3 = t.tb3 !== null && t.tb3 !== undefined;
-    var tag = has3 ? "L3" : "L2";
-    var tb = has3 ? t.tb3 : t.tb2;
-    var d = has3 ? t.delta23 : t.delta;
-    var below = has3 ? t.duoi5_l3 : t.duoi5_l2;
+    var subL7 = (t.n7 && t.tb7 !== null)
+      ? (" • L7 (12A10): <b>" + fmt(t.tb7) + "</b>")
+      : "";
     return "<div class='card kpi'>"
-      + "<div class='k'>" + mon + " TB (" + tag + ")</div>"
-      + "<div class='v'>" + fmt(tb) + "</div>"
-      + "<div>" + pill(d) + "</div>"
-      + "<div class='s'>" + below + " em <5 (" + tag + ")</div></div>";
+      + "<div class='k'>" + mon + " TB (L6 / L7)</div>"
+      + "<div class='v'>" + fmt(t.tb6) + "</div>"
+      + "<div>" + pill(t.delta56) + " <small style='color:var(--mut)'>vs L5</small></div>"
+      + "<div class='s'>" + t.duoi5_l6 + " em &lt;5 (L6)" + subL7 + "</div></div>";
   });
   $("kpiGrid").innerHTML = h.join("");
 }
@@ -162,8 +168,8 @@ function barRow(label, vals, txt, clss) {
 function legend3() {
   return "<div class='legend'><span><span class='dot' "
     + "style='background:#94a3b8'></span>L1</span><span><span class='dot' "
-    + "style='background:#4f46e5'></span>L2</span><span><span class='dot' "
-    + "style='background:#10b981'></span>L3</span></div>";
+    + "style='background:#4f46e5'></span>L5</span><span><span class='dot' "
+    + "style='background:#10b981'></span>L6 (kèm L7)</span></div>";
 }
 
 function renderCharts() {
@@ -171,16 +177,17 @@ function renderCharts() {
   var mons = MON_ALL.filter(fullCover);
   var avg = mons.map(function (mon) {
     var t = s[mon];
-    return barRow(mon, [t.tb1, t.tb2, t.tb3],
-      fmt(t.tb1) + " → " + fmt(t.tb2) + " → " + fmt(t.tb3), ["l1", "l2", "l3"]);
+    var tail = (t.tb7 !== null && t.tb7 !== undefined) ? (" | L7: " + fmt(t.tb7)) : "";
+    return barRow(mon, [t.tb1, t.tb5, t.tb6],
+      fmt(t.tb1) + " → " + fmt(t.tb5) + " → " + fmt(t.tb6) + tail, ["l1", "l2", "l3"]);
   });
   $("chartAvg").innerHTML = avg.join("") + legend3();
   var bel = mons.map(function (mon) {
     var t = s[mon];
     var a = t.pct_duoi5_l1 || 0;
-    var b = t.pct_duoi5_l2 || 0;
-    var c = t.pct_duoi5_l3 || 0;
-    return barRow(mon, [a, b, c], a + "% → " + b + "% → " + c + "%", ["l1", "bad", "l3"]);
+    var b = t.pct_duoi5_l5 || 0;
+    var c = t.pct_duoi5_l6 || 0;
+    return barRow(mon, [a / 10, b / 10, c / 10], a + "% → " + b + "% → " + c + "%", ["l1", "bad", "l3"]);
   });
   $("chartBelow").innerHTML = bel.join("") + legend3();
 }
@@ -192,20 +199,22 @@ function renderTableKhoi() {
     if (!t) {
       return "";
     }
-    var pct2 = t.pct_duoi5_l2 === null ? "—" : t.pct_duoi5_l2;
     var r = "<tr><td class='l big'>" + mon + coverBadge(t) + "</td>";
-    r += "<td>" + t.n1 + "/" + t.n2 + "</td>";
     r += "<td>" + fmt(t.tb1) + "</td>";
-    r += "<td class='big'>" + fmt(t.tb2) + "</td>";
-    r += "<td class='big' style='color:#1d4ed8'>" + fmt(t.tb3) + "</td>";
-    r += "<td>" + pill(t.delta) + "</td>";
-    r += "<td>" + t.duoi5_l1 + " (" + t.pct_duoi5_l1 + "%)</td>";
-    r += "<td class='big' style='color:var(--red)'>" + t.duoi5_l2;
-    r += " (" + pct2 + "%)</td>";
-    var d3 = (t.duoi5_l3 === null || t.duoi5_l3 === undefined) ? "—" : t.duoi5_l3;
-    var pct3 = (t.pct_duoi5_l3 === null || t.pct_duoi5_l3 === undefined) ? "—" : t.pct_duoi5_l3;
-    r += "<td>" + d3 + " (" + pct3 + "%)</td>";
-    r += "<td class='big' style='color:var(--green)'>" + t.gioi_l2 + "</td>";
+    r += "<td>" + fmt(t.tb2) + "</td>";
+    r += "<td>" + fmt(t.tb3) + "</td>";
+    r += "<td>" + fmt(t.tb4) + "</td>";
+    r += "<td>" + fmt(t.tb5) + "</td>";
+    r += "<td class='big' style='color:#1d4ed8'>" + fmt(t.tb6) + "</td>";
+    r += "<td class='big' style='color:#6d28d9'>" + fmt(t.tb7) + "</td>";
+    r += "<td>" + pill(t.delta56) + "</td>";
+    var d5 = t.n5 ? (t.duoi5_l5 + " (" + t.pct_duoi5_l5 + "%)") : "—";
+    var d6 = t.n6 ? (t.duoi5_l6 + " (" + t.pct_duoi5_l6 + "%)") : "—";
+    var d7 = t.n7 ? (t.duoi5_l7 + " (" + t.pct_duoi5_l7 + "%)") : "—";
+    r += "<td>" + d5 + "</td>";
+    r += "<td class='big' style='color:var(--red)'>" + d6 + "</td>";
+    r += "<td>" + d7 + "</td>";
+    r += "<td class='big' style='color:var(--green)'>" + (t.n6 ? t.gioi_l6 : "—") + "</td>";
     r += "<td>" + trendBadge(t) + "</td></tr>";
     return r;
   });
@@ -217,20 +226,20 @@ function renderMatrix() {
   MON_CHINH.forEach(function (mon) {
     h += "<th>" + mon + "</th>";
   });
-  h += "<th>Sĩ số L3</th></tr></thead><tbody>";
+  h += "<th>Sĩ số (L6 / L7)</th></tr></thead><tbody>";
   PUB.meta.classes.forEach(function (lop) {
     h += "<tr><td class='l big'>" + lop + "</td>";
     MON_CHINH.forEach(function (mon) {
       var t = (PUB.class_stats[lop] || {})[mon];
-      if (!t || (!t.n2 && !t.n3)) {
+      if (!t || !t.latest_dot) {
         h += "<td style='color:#cbd5e1'>—</td>";
         return;
       }
-      var use3 = t.n3 && t.tb3 !== null && t.tb3 !== undefined;
-      var tb = use3 ? t.tb3 : t.tb2;
-      var dv = (use3 && t.tb2 !== null && t.tb2 !== undefined) ? r3(t.tb3 - t.tb2) : t.delta;
-      var below = use3 ? t.duoi5_l3 : t.duoi5_l2;
-      var tag = use3 ? "L3" : "L2";
+      var tag = t.latest_dot;
+      var k = Number(tag.slice(1));
+      var tb = t["tb" + k];
+      var below = t["duoi5_l" + k];
+      var dv = t.delta_latest;
       var hot = (tb !== null && tb < 5.5) || below >= 10;
       h += hot ? "<td class='hot'>" : "<td>";
       h += "<span class='big'>" + fmt(tb) + "</span> <small>" + tag + "</small> " + pill(dv);
@@ -246,7 +255,11 @@ function renderMatrix() {
         ov = o;
       }
     });
-    h += "<td>" + (ov ? (ov.siso_l3 || ov.siso_l2) : "—") + "</td></tr>";
+    var sisoTxt = "—";
+    if (ov) {
+      sisoTxt = ov.siso_l7 ? (ov.siso_l6 + " (L7: " + ov.siso_l7 + ")") : String(ov.siso_l6 || ov.siso_l3 || ov.siso_l2);
+    }
+    h += "<td>" + sisoTxt + "</td></tr>";
   });
   h += "</tbody></table>";
   $("matrixWrap").innerHTML = h;
@@ -267,7 +280,7 @@ function renderGate() {
   var box = $("gateBox");
   if (SEC) {
     box.innerHTML = "<div class='gate open'>"
-      + "<span>Đã mở khóa — danh sách tên đang hiển thị.</span>"
+      + "<span>Đã mở khóa — danh sách tên đang hiển thị (L1 → L7).</span>"
       + "<button type='button' class='btn' id='btnLock'>Khóa lại</button>"
       + "</div>";
     $("btnLock").addEventListener("click", function () {
@@ -381,20 +394,21 @@ function doUnlock(pw) {
 }
 
 function needUnlockHTML() {
-  return "<tr><td colspan='6' class='empty'>"
+  return "<tr><td colspan='7' class='empty'>"
     + "Đã khóa — mở khóa ở hộp phía trên để xem tên.</td></tr>";
 }
 
 /* ---------- 3. Phần khóa (cần SEC) ---------- */
 
-function row4(x) {
-  var tb3 = tb3calc(x.l1, x.l2, x.l3);
-  var d = (x.delta23 !== undefined && x.delta23 !== null) ? x.delta23 : x.delta;
+function rowLopItem(x) {
+  var l14 = [x.l1, x.l2, x.l3, x.l4].map(fmt).join(" / ");
+  var d = (x.delta_latest !== undefined && x.delta_latest !== null) ? x.delta_latest : x.delta;
   var h = "<tr><td class='l nm'>" + esc(x.ten) + "</td>";
-  h += "<td>" + fmt(x.l1) + "</td>";
-  h += "<td class='big'>" + fmt(x.l2) + "</td>";
-  h += "<td class='big'>" + fmt(x.l3) + "</td>";
-  h += "<td class='big' style='" + tb3color(tb3) + ";font-weight:800'>" + fmt(tb3) + "</td>";
+  h += "<td style='font-size:11.5px;color:var(--mut)'>" + l14 + "</td>";
+  h += "<td>" + fmt(x.l5) + "</td>";
+  h += "<td class='big'>" + fmt(x.l6) + "</td>";
+  h += "<td class='big' style='color:#6d28d9'>" + fmt(x.l7) + "</td>";
+  h += "<td class='big' style='" + tb3color(x.tb) + ";font-weight:800'>" + fmt(x.tb) + "</td>";
   h += "<td>" + pill(d) + "</td></tr>";
   return h;
 }
@@ -407,25 +421,86 @@ function fillList(tbodyId, countId, list) {
     return;
   }
   if (!list.length) {
-    tb.innerHTML = "<tr><td colspan='6' class='empty'>Không có</td></tr>";
+    tb.innerHTML = "<tr><td colspan='7' class='empty'>Không có</td></tr>";
   } else {
-    tb.innerHTML = list.map(row4).join("");
+    tb.innerHTML = list.map(rowLopItem).join("");
   }
   $(countId).textContent = list.length + " em";
 }
 
-function renderLop() {
-  var lop = $("selLop").value;
-  var mon = $("selMon").value;
-  var st = PUB.class_stats[lop][mon];
-  var stat = "Lớp <b>" + lop + "</b> • Môn <b>" + mon + "</b> • TB <b>"
-    + fmt(st.tb1) + " → " + fmt(st.tb2) + "</b> " + pill(st.delta)
-    + " • Dưới 5: <b>" + st.duoi5_l1 + " → " + st.duoi5_l2
-    + "</b> / " + st.n2 + " bài";
-  if (st.tb3 !== null && st.tb3 !== undefined) {
-    stat += " • <b>L3 TB " + fmt(st.tb3) + "</b> (" + st.n3 + " bài, "
-      + st.duoi5_l3 + " em <5)";
+function computeLopLists(lop, mon, dotMode) {
+  if (!dotMode || dotMode === "AUTO") {
+    return SEC.class_lists[lop][mon];
   }
+  var phudao = [];
+  var quantam = [];
+  var boiduong = [];
+  var tienbo = [];
+  var thutlui = [];
+  SEC.students.forEach(function (s) {
+    if (s.lop !== lop) return;
+    var tb = tbAllCalc(s, mon);
+    var vCur = null;
+    var vPrev = null;
+    if (dotMode === "TB") {
+      vCur = tb;
+      vPrev = s.l1 ? s.l1[mon] : null;
+    } else {
+      var k = Number(dotMode.slice(1));
+      vCur = s["l" + k] ? s["l" + k][mon] : null;
+      for (var p = k - 1; p >= 1; p--) {
+        var vp = s["l" + p] ? s["l" + p][mon] : null;
+        if (vp !== null && vp !== undefined) {
+          vPrev = vp;
+          break;
+        }
+      }
+    }
+    if (vCur === null || vCur === undefined) return;
+    var dLat = (vPrev !== null && vPrev !== undefined) ? Math.round((vCur - vPrev) * 100) / 100 : null;
+    var item = {
+      ten: s.ten,
+      l1: s.l1 ? s.l1[mon] : null,
+      l2: s.l2 ? s.l2[mon] : null,
+      l3: s.l3 ? s.l3[mon] : null,
+      l4: s.l4 ? s.l4[mon] : null,
+      l5: s.l5 ? s.l5[mon] : null,
+      l6: s.l6 ? s.l6[mon] : null,
+      l7: s.l7 ? s.l7[mon] : null,
+      tb: tb,
+      latest: vCur,
+      delta_latest: dLat
+    };
+    if (vCur < 5) phudao.push(item);
+    else if (vCur < 6.5) quantam.push(item);
+    if (vCur >= 8) boiduong.push(item);
+    if (dLat !== null) {
+      if (dLat >= 1.5) tienbo.push(item);
+      if (dLat <= -2) thutlui.push(item);
+    }
+  });
+  phudao.sort(function (a, b) { return a.latest - b.latest; });
+  quantam.sort(function (a, b) { return a.latest - b.latest; });
+  boiduong.sort(function (a, b) { return b.latest - a.latest; });
+  tienbo.sort(function (a, b) { return b.delta_latest - a.delta_latest; });
+  thutlui.sort(function (a, b) { return a.delta_latest - b.delta_latest; });
+  return { phudao: phudao, quantam: quantam, boiduong: boiduong, tienbo: tienbo, thutlui: thutlui };
+}
+
+function renderLop() {
+  var lop = $("selLop").value || "12A10";
+  var mon = $("selMon").value || "Toán";
+  var dotMode = ($("selDotLop") && $("selDotLop").value) || "AUTO";
+  var st = PUB.class_stats[lop][mon];
+  var parts = [];
+  for (var k = 1; k <= 7; k++) {
+    if (st["n" + k] > 0 && st["tb" + k] !== null) {
+      parts.push("L" + k + ": <b>" + fmt(st["tb" + k]) + "</b> (" + st["duoi5_l" + k] + " &lt;5)");
+    }
+  }
+  var stat = "Lớp <b>" + lop + "</b> • Môn <b>" + mon + "</b> • Đợt mới nhất: <b>"
+    + (st.latest_dot || "—") + "</b> " + pill(st.delta_latest)
+    + "<br>" + parts.join(" → ");
   $("lopStat").innerHTML = stat;
   if (!SEC) {
     ["tbPhu", "tbQuan", "tbBoi", "tbTien", "tbThut"].forEach(function (id) {
@@ -436,7 +511,7 @@ function renderLop() {
     });
     return;
   }
-  var L = SEC.class_lists[lop][mon];
+  var L = computeLopLists(lop, mon, dotMode);
   fillList("tbPhu", "cPhu", L.phudao);
   fillList("tbQuan", "cQuan", L.quantam);
   fillList("tbBoi", "cBoi", L.boiduong);
@@ -464,40 +539,19 @@ function renderMonTabs() {
 function rowKhoi(x) {
   var h = "<tr><td class='big'>" + x.lop + "</td>";
   h += "<td class='l nm'>" + esc(x.ten) + "</td>";
-  h += "<td>" + fmt(x.l1) + "</td>";
-  h += "<td class='big'>" + fmt(x.l2) + "</td>";
-  h += "<td>" + fmt(x.l3) + "</td></tr>";
+  h += "<td>" + fmt(x.l5) + "</td>";
+  h += "<td class='big'>" + fmt(x.l6) + "</td>";
+  h += "<td class='big' style='color:#6d28d9'>" + fmt(x.l7) + "</td>";
+  h += "<td style='" + tb3color(x.tb) + ";font-weight:800'>" + fmt(x.tb) + "</td></tr>";
   return h;
-}
-
-function d23of(x) {
-  if (x.l3 === null || x.l3 === undefined || x.l2 === null || x.l2 === undefined) {
-    return "";
-  }
-  return Math.round((x.l3 - x.l2) * 100) / 100;
-}
-
-function top23(mon) {
-  var arr = [];
-  SEC.students.forEach(function (s) {
-    var b = s.l2 ? s.l2[mon] : null;
-    var c = s.l3 ? s.l3[mon] : null;
-    if (b === null || b === undefined || c === null || c === undefined) {
-      return;
-    }
-    arr.push({ lop: s.lop, ten: s.ten, l1: b, l2: c, delta: Math.round((c - b) * 100) / 100 });
-  });
-  arr.sort(function (x, y) {
-    return y.delta - x.delta;
-  });
-  return arr;
 }
 
 function topRows(list) {
   return list.map(function (x) {
+    var tag = (x.from_dot && x.to_dot) ? (" <small>(" + x.from_dot + "→" + x.to_dot + ")</small>") : "";
     var h = "<tr><td>" + x.lop + "</td>";
     h += "<td class='l'>" + esc(x.ten) + "</td>";
-    h += "<td>" + fmt(x.l1) + "→<b>" + fmt(x.l2) + "</b></td>";
+    h += "<td>" + fmt(x.l1) + "→<b>" + fmt(x.l2) + "</b>" + tag + "</td>";
     h += "<td>" + pill(x.delta) + "</td></tr>";
     return h;
   }).join("");
@@ -517,32 +571,19 @@ function renderKhoi() {
   var T = SEC.top_changes[curMonKhoi];
   $("kTbPhu").innerHTML = B.phudao.length
     ? B.phudao.map(rowKhoi).join("")
-    : "<tr><td colspan='5' class='empty'>Không có</td></tr>";
+    : "<tr><td colspan='6' class='empty'>Không có</td></tr>";
   $("kTbBoi").innerHTML = B.boiduong.length
     ? B.boiduong.map(rowKhoi).join("")
-    : "<tr><td colspan='5' class='empty'>Không có</td></tr>";
+    : "<tr><td colspan='6' class='empty'>Không có</td></tr>";
   $("kPhu").textContent = B.phudao.length + " em";
   $("kBoi").textContent = B.boiduong.length + " em";
-  var T23 = top23(curMonKhoi);
-  var rangeT = "L1→L2";
-  var tangList = T.tang_manh_nhat;
-  var giamList = T.giam_manh_nhat;
-  if (T23.length) {
-    rangeT = "L2→L3";
-    tangList = T23.filter(function (x) {
-      return x.delta > 0;
-    }).slice(0, 10);
-    giamList = T23.filter(function (x) {
-      return x.delta < 0;
-    }).slice(-10).reverse();
-  }
-  $("kTopTangT").textContent = rangeT;
-  $("kTopGiamT").textContent = rangeT;
-  $("kTopTang").innerHTML = tangList.length
-    ? topRows(tangList)
+  $("kTopTangT").textContent = "Đợt mới nhất";
+  $("kTopGiamT").textContent = "Đợt mới nhất";
+  $("kTopTang").innerHTML = T.tang_manh_nhat.length
+    ? topRows(T.tang_manh_nhat)
     : "<tr><td colspan='4' class='empty'>Không có</td></tr>";
-  $("kTopGiam").innerHTML = giamList.length
-    ? topRows(giamList)
+  $("kTopGiam").innerHTML = T.giam_manh_nhat.length
+    ? topRows(T.giam_manh_nhat)
     : "<tr><td colspan='4' class='empty'>Không có</td></tr>";
 }
 
@@ -553,20 +594,30 @@ function normStr(s) {
     .replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d");
 }
 
-function groupChip(l2) {
-  if (l2 === null || l2 === undefined) {
+function groupChip(v) {
+  if (v === null || v === undefined) {
     return "—";
   }
-  if (l2 < 5) {
+  if (v < 5) {
     return '<span class="pill down">phụ đạo</span>';
   }
-  if (l2 >= 8) {
+  if (v >= 8) {
     return '<span class="pill up">bồi dưỡng</span>';
   }
-  if (l2 < 6.5) {
+  if (v < 6.5) {
     return '<span class="pill warn">quan tâm</span>';
   }
   return '<span class="pill flat">đạt</span>';
+}
+
+function latestScoreOf(s, mon) {
+  for (var k = 7; k >= 1; k--) {
+    var v = s["l" + k] ? s["l" + k][mon] : null;
+    if (v !== null && v !== undefined) {
+      return v;
+    }
+  }
+  return null;
 }
 
 function searchHS(q) {
@@ -589,46 +640,30 @@ function searchHS(q) {
   }
   var h = res.map(function (s) {
     var rows = PUB.meta.subjects.filter(function (mon) {
-      var a = s.l1[mon];
-      var b = s.l2[mon];
-      var c = s.l3 ? s.l3[mon] : null;
-      var hasA = a !== null && a !== undefined;
-      var hasB = b !== null && b !== undefined;
-      var hasC = c !== null && c !== undefined;
-      return hasA || hasB || hasC;
-    });
-    var showL3 = rows.some(function (mon) {
-      var c = s.l3 ? s.l3[mon] : null;
-      return c !== null && c !== undefined;
+      return latestScoreOf(s, mon) !== null;
     });
     var body = rows.map(function (mon) {
-      var a1 = s.l1[mon];
-      var b1 = s.l2[mon];
-      var c1 = s.l3 ? s.l3[mon] : null;
-      var t3 = tb3calc(a1, b1, c1);
-      var d23 = (s.delta23 && s.delta23[mon] !== undefined) ? s.delta23[mon] : s.delta[mon];
+      var vals = [1, 2, 3, 4, 5, 6, 7].map(function (k) {
+        return s["l" + k] ? s["l" + k][mon] : null;
+      });
+      var tb = tbAllCalc(s, mon);
+      var dLat = s.delta_latest ? s.delta_latest[mon] : null;
+      var latV = latestScoreOf(s, mon);
       var r = "<tr><td class='l'>" + mon + "</td>";
-      r += "<td>" + fmt(a1) + "</td>";
-      r += "<td class='big'>" + fmt(b1) + "</td>";
-      if (showL3) {
-        var c3 = s.l3 ? s.l3[mon] : null;
-        r += "<td class='big'>" + fmt(c3) + "</td>";
-        r += "<td class='big' style='" + tb3color(t3) + "'>" + fmt(t3) + "</td>";
-      }
-      r += "<td>" + pill(d23) + "</td>";
-      r += "<td>" + groupChip(s.l2[mon]) + "</td><td>" + spark(a1, b1, c1) + "</td></tr>";
+      vals.forEach(function (v, idx) {
+        var cls = (idx >= 5) ? " class='big'" : "";
+        r += "<td" + cls + ">" + fmt(v) + "</td>";
+      });
+      r += "<td class='big' style='" + tb3color(tb) + "'>" + fmt(tb) + "</td>";
+      r += "<td>" + pill(dLat) + "</td>";
+      r += "<td>" + groupChip(latV) + "</td><td>" + spark7(vals) + "</td></tr>";
       return r;
     });
     var c = "<div class='card'><h3>" + esc(s.ten);
     c += " <span class='pill flat'>" + s.lop + "</span></h3>";
-    if (showL3) {
-      c += "<p class='hint'>TB 3 lần = (L1+L2+L3)/3 — chỉ hiện khi đủ 3 đợt. Δ ưu tiên L2→L3.</p>";
-    }
+    c += "<p class='hint'>Điểm 7 đợt KTĐK (L1 → L7) • TB = trung bình các đợt đã thi • Δ = chênh lệch 2 đợt gần nhất.</p>";
     c += "<div class='tblwrap'><table class='tbl'><thead><tr>";
-    c += "<th class='l'>Môn</th><th>L1</th><th>L2</th>";
-    if (showL3) {
-      c += "<th>L3</th><th>TB 3 lần</th>";
-    }
+    c += "<th class='l'>Môn</th><th>L1</th><th>L2</th><th>L3</th><th>L4</th><th>L5</th><th>L6</th><th>L7</th><th>TB</th>";
     c += "<th>Δ</th><th>Nhóm</th><th>Tiến triển</th>";
     c += "</tr></thead><tbody>" + body.join("") + "</tbody></table></div></div>";
     return c;
@@ -644,7 +679,7 @@ function csvCell(v) {
 }
 
 function downloadCSV(fname, rows) {
-  var csv = "﻿" + rows.map(function (r) {
+  var csv = "\uFEFF" + rows.map(function (r) {
     return r.map(csvCell).join(",");
   }).join("\n");
   var blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
@@ -662,45 +697,53 @@ function exportCSV(whole) {
   }
   if (whole) {
     var B = SEC.block_lists[curMonKhoi];
-    var rows = [["Nhom", "Lop", "Ho ten", "L1", "L2", "L3", "Delta", "Delta23"]];
+    var rows = [["Nhom", "Lop", "Ho ten", "L1", "L2", "L3", "L4", "L5", "L6", "L7", "TB", "Delta_moi_nhat"]];
     B.phudao.forEach(function (x) {
-      rows.push(["Phu dao", x.lop, x.ten, x.l1, x.l2, x.l3 === undefined ? "" : x.l3,
-        x.delta, d23of(x)]);
+      rows.push(["Phu dao", x.lop, x.ten, x.l1, x.l2, x.l3, x.l4, x.l5, x.l6, x.l7, x.tb, x.delta_latest]);
     });
     B.boiduong.forEach(function (x) {
-      rows.push(["Boi duong", x.lop, x.ten, x.l1, x.l2, x.l3 === undefined ? "" : x.l3,
-        x.delta, d23of(x)]);
+      rows.push(["Boi duong", x.lop, x.ten, x.l1, x.l2, x.l3, x.l4, x.l5, x.l6, x.l7, x.tb, x.delta_latest]);
     });
-    downloadCSV("toankhoi_" + curMonKhoi + ".csv", rows);
+    downloadCSV("toankhoi_" + curMonKhoi + "_L1-L7.csv", rows);
     return;
   }
   var lop = $("selLop").value;
   var mon = $("selMon").value;
-  var L = SEC.class_lists[lop][mon];
-  var r2 = [["Nhom", "Ho ten", "L1", "L2", "L3", "TB_3lan", "Delta", "Delta23"]];
-  L.phudao.forEach(function (x) {
-    r2.push(["Phu dao", x.ten, x.l1, x.l2, x.l3 === undefined ? "" : x.l3,
-      tb3calc(x.l1, x.l2, x.l3) === null ? "" : tb3calc(x.l1, x.l2, x.l3),
-      x.delta, x.delta23 === undefined ? "" : x.delta23]);
+  var dotMode = ($("selDotLop") && $("selDotLop").value) || "AUTO";
+  var L = computeLopLists(lop, mon, dotMode);
+  var r2 = [["Nhom", "Ho ten", "L1", "L2", "L3", "L4", "L5", "L6", "L7", "TB", "Delta_moi_nhat"]];
+  [["Phu dao", L.phudao], ["Quan tam", L.quantam], ["Boi duong", L.boiduong]].forEach(function (pair) {
+    pair[1].forEach(function (x) {
+      r2.push([pair[0], x.ten, x.l1, x.l2, x.l3, x.l4, x.l5, x.l6, x.l7, x.tb, x.delta_latest]);
+    });
   });
-  L.quantam.forEach(function (x) {
-    r2.push(["Quan tam", x.ten, x.l1, x.l2, x.l3 === undefined ? "" : x.l3,
-      tb3calc(x.l1, x.l2, x.l3) === null ? "" : tb3calc(x.l1, x.l2, x.l3),
-      x.delta, x.delta23 === undefined ? "" : x.delta23]);
-  });
-  L.boiduong.forEach(function (x) {
-    r2.push(["Boi duong", x.ten, x.l1, x.l2, x.l3 === undefined ? "" : x.l3,
-      tb3calc(x.l1, x.l2, x.l3) === null ? "" : tb3calc(x.l1, x.l2, x.l3),
-      x.delta, x.delta23 === undefined ? "" : x.delta23]);
-  });
-  downloadCSV(lop + "_" + mon + ".csv", r2);
+  downloadCSV(lop + "_" + mon + "_L1-L7.csv", r2);
 }
 
-/* ---------- Khởi động ---------- */
-
-/* ---------- 6. Bang diem 3 lan kieu Sheets ---------- */
+/* ---------- 6. Bang diem L1-L7 kieu Sheets ---------- */
 
 var bdSort = { key: "ten", dir: 1 };
+
+function activeDotsForLop(lop) {
+  var dotSel = $("selDotBd");
+  var mode = (dotSel && dotSel.value) || "ALL";
+  if (mode !== "ALL") {
+    return [mode, "TB"];
+  }
+  var out = [];
+  for (var k = 1; k <= 7; k++) {
+    var hasAny = SEC.students.some(function (s) {
+      if (s.lop !== lop) return false;
+      var lk = s["l" + k] || {};
+      return Object.keys(lk).some(function (m) { return lk[m] !== null && lk[m] !== undefined; });
+    });
+    if (hasAny) {
+      out.push("L" + k);
+    }
+  }
+  out.push("TB");
+  return out;
+}
 
 function bdVal(s, key) {
   if (key === "ten") {
@@ -709,19 +752,11 @@ function bdVal(s, key) {
   var p = key.split("|");
   var mon = p[0];
   var k = p[1];
-  var v = null;
-  if (k === "L1") {
-    v = s.l1 ? s.l1[mon] : null;
-  } else if (k === "L2") {
-    v = s.l2 ? s.l2[mon] : null;
-  } else if (k === "L3") {
-    v = s.l3 ? s.l3[mon] : null;
-  } else {
-    var a = s.l1 ? s.l1[mon] : null;
-    var b = s.l2 ? s.l2[mon] : null;
-    var c = s.l3 ? s.l3[mon] : null;
-    v = tb3calc(a, b, c);
+  if (k === "TB") {
+    return tbAllCalc(s, mon);
   }
+  var idx = Number(k.slice(1));
+  var v = s["l" + idx] ? s["l" + idx][mon] : null;
   return (v === undefined) ? null : v;
 }
 
@@ -732,13 +767,7 @@ function bdSubjects(lop) {
       return;
     }
     PUB.meta.subjects.forEach(function (mon) {
-      var a = s.l1 ? s.l1[mon] : null;
-      var b = s.l2 ? s.l2[mon] : null;
-      var c = s.l3 ? s.l3[mon] : null;
-      var has = (a !== null && a !== undefined)
-        || (b !== null && b !== undefined)
-        || (c !== null && c !== undefined);
-      if (has) {
+      if (latestScoreOf(s, mon) !== null) {
         seen[mon] = 1;
       }
     });
@@ -799,7 +828,7 @@ function bdStatCell(vals, op) {
 function renderBangDiem() {
   var tbl = $("bdTable");
   var sel = $("selLopBd");
-  var lop = (sel && sel.value) || PUB.meta.classes[0];
+  var lop = (sel && sel.value) || "12A10";
   if (!SEC) {
     tbl.innerHTML = "<thead><tr><th>Bảng điểm</th></tr></thead>"
       + "<tbody><tr><td class='empty'>Đã khóa — mở khóa ở mục 3 để xem.</td></tr></tbody>";
@@ -807,6 +836,7 @@ function renderBangDiem() {
     return;
   }
   var mons = bdSubjects(lop);
+  var cols = activeDotsForLop(lop);
   var qEl = $("bdQ");
   var q = normStr(((qEl && qEl.value) || "").trim());
   var rows = SEC.students.filter(function (s) {
@@ -825,21 +855,11 @@ function renderBangDiem() {
     var b = bdVal(y, sk);
     var an = (a === null || a === undefined);
     var bn = (b === null || b === undefined);
-    if (an && bn) {
-      return 0;
-    }
-    if (an) {
-      return 1;
-    }
-    if (bn) {
-      return -1;
-    }
-    if (a < b) {
-      return -1 * sd;
-    }
-    if (a > b) {
-      return 1 * sd;
-    }
+    if (an && bn) return 0;
+    if (an) return 1;
+    if (bn) return -1;
+    if (a < b) return -1 * sd;
+    if (a > b) return 1 * sd;
     return 0;
   });
   var arrow = sd === 1 ? " sorted-asc" : " sorted-desc";
@@ -847,14 +867,14 @@ function renderBangDiem() {
   h += "<th class='c1 l sortable" + (sk === "ten" ? arrow : "") + "' data-k='ten'>Họ tên</th>";
   mons.forEach(function (mon, i) {
     var g = " g" + (i % 2);
-    ["L1", "L2", "L3", "TB"].forEach(function (k) {
+    cols.forEach(function (k) {
       var key = mon + "|" + k;
       var cls = "sortable" + g + (sk === key ? arrow : "");
       h += "<th class='" + cls + "' data-k='" + key + "'>" + mon + " " + k + "</th>";
     });
   });
   h += "</tr></thead><tbody>";
-  var span = 2 + mons.length * 4;
+  var span = 2 + mons.length * cols.length;
   if (!rows.length) {
     h += "<tr><td colspan='" + span + "' class='empty'>Không có học sinh nào.</td></tr>";
   }
@@ -862,18 +882,17 @@ function renderBangDiem() {
     h += "<tr><td class='c0'>" + (idx + 1) + "</td>";
     h += "<td class='c1 l nm'>" + esc(s.ten) + "</td>";
     mons.forEach(function (mon) {
-      var a = s.l1 ? s.l1[mon] : null;
-      var b = s.l2 ? s.l2[mon] : null;
-      var c = s.l3 ? s.l3[mon] : null;
-      var t = tb3calc(a, b, c);
-      h += bdCell(a, false) + bdCell(b, false) + bdCell(c, false) + bdCell(t, true);
+      cols.forEach(function (k) {
+        var v = bdVal(s, mon + "|" + k);
+        h += bdCell(v, k === "TB");
+      });
     });
     h += "</tr>";
   });
   [["TB lớp", "avg"], ["Cao nhất", "max"], ["Thấp nhất", "min"], ["Dưới 5", "below5"]].forEach(function (pair) {
     h += "<tr class='avgrow'><td class='c0'>—</td><td class='c1 l'>" + pair[0] + "</td>";
     mons.forEach(function (mon) {
-      ["L1", "L2", "L3", "TB"].forEach(function (k) {
+      cols.forEach(function (k) {
         h += bdStatCell(bdVals(rows, mon, k), pair[1]);
       });
     });
@@ -895,7 +914,7 @@ function renderBangDiem() {
     });
   });
   $("bdStat").innerHTML = "Lớp <b>" + lop + "</b> • " + rows.length + " em • "
-    + mons.length + " môn có điểm • Click tiêu đề cột để sắp xếp";
+    + mons.length + " môn (" + cols.join(", ") + ") • Click tiêu đề cột để sắp xếp";
 }
 
 function exportBangDiem() {
@@ -903,11 +922,14 @@ function exportBangDiem() {
     return;
   }
   var sel = $("selLopBd");
-  var lop = (sel && sel.value) || PUB.meta.classes[0];
+  var lop = (sel && sel.value) || "12A10";
   var mons = bdSubjects(lop);
+  var cols = activeDotsForLop(lop);
   var head = ["STT", "Ho ten"];
   mons.forEach(function (mon) {
-    head.push(mon + " L1", mon + " L2", mon + " L3", mon + " TB");
+    cols.forEach(function (k) {
+      head.push(mon + " " + k);
+    });
   });
   var out = [head];
   var i = 0;
@@ -918,18 +940,14 @@ function exportBangDiem() {
     i += 1;
     var r = [i, s.ten];
     mons.forEach(function (mon) {
-      var a = s.l1 ? s.l1[mon] : null;
-      var b = s.l2 ? s.l2[mon] : null;
-      var c = s.l3 ? s.l3[mon] : null;
-      var t = tb3calc(a, b, c);
-      r.push(a === undefined || a === null ? "" : a);
-      r.push(b === undefined || b === null ? "" : b);
-      r.push(c === undefined || c === null ? "" : c);
-      r.push(t === null ? "" : t);
+      cols.forEach(function (k) {
+        var v = bdVal(s, mon + "|" + k);
+        r.push(v === undefined || v === null ? "" : v);
+      });
     });
     out.push(r);
   });
-  downloadCSV("bangdiem_" + lop + "_3lan.csv", out);
+  downloadCSV("bangdiem_" + lop + "_L1-L7.csv", out);
 }
 
 /* ---------- 7. Xet to hop mon ---------- */
@@ -942,12 +960,14 @@ var COMBOS = {
   "D01": ["Toán", "Ngữ văn", "Anh Văn"],
   "D07": ["Toán", "Hóa học", "Anh Văn"]
 };
-var curCombo = "A00";
+var curCombo = "B00";
 
 function dotVal(s, mon, dot) {
-  var v = dot === "L1" ? (s.l1 ? s.l1[mon] : null)
-    : dot === "L2" ? (s.l2 ? s.l2[mon] : null)
-    : (s.l3 ? s.l3[mon] : null);
+  if (dot === "TB") {
+    return tbAllCalc(s, mon);
+  }
+  var idx = Number(dot.slice(1));
+  var v = s["l" + idx] ? s["l" + idx][mon] : null;
   return (v === undefined) ? null : v;
 }
 
@@ -994,7 +1014,7 @@ function renderToHop() {
   var lopSel = $("selLopTh");
   var lop = (lopSel && lopSel.value) || "ALL";
   var dotSel = $("selDotTh");
-  var dot = (dotSel && dotSel.value) || "L3";
+  var dot = (dotSel && dotSel.value) || "L6";
   if (!SEC) {
     tbl.innerHTML = "<thead><tr><th>Tổ hợp " + curCombo + "</th></tr></thead>"
       + "<tbody><tr><td class='empty'>Đã khóa — mở khóa ở mục 3 để xem.</td></tr></tbody>";
@@ -1023,12 +1043,13 @@ function renderToHop() {
   });
   h += "<th>Tổng " + dot + "</th></tr></thead><tbody>";
   if (!rows.length) {
-    h += "<tr><td colspan='7' class='empty'>Không có em nào đủ 3 môn.</td></tr>";
+    h += "<tr><td colspan='7' class='empty'>Không có em nào đủ 3 môn ở đợt này.</td></tr>";
   }
   var sum = 0;
   rows.forEach(function (r, i) {
     sum += r.total;
-    h += "<tr><td class='big'>" + (i + 1) + "</td>";
+    var rank = 1 + rows.filter(function (o) { return o.total > r.total; }).length;
+    h += "<tr><td class='big'>" + rank + "</td>";
     h += "<td class='l nm'>" + esc(r.ten) + "</td><td>" + r.lop + "</td>";
     h += "<td>" + fmt(r.m[0]) + "</td><td>" + fmt(r.m[1]) + "</td><td>" + fmt(r.m[2]) + "</td>";
     h += "<td class='big' style='" + totalColor(r.total) + "'>" + fmt(r.total) + "</td></tr>";
@@ -1050,7 +1071,7 @@ function exportToHop() {
     return;
   }
   var lop = ($("selLopTh").value) || "ALL";
-  var dot = ($("selDotTh").value) || "L3";
+  var dot = ($("selDotTh").value) || "L6";
   var mons = COMBOS[curCombo];
   var head = ["Hang", "Ho ten", "Lop", mons[0], mons[1], mons[2], "Tong " + dot];
   var out = [head];
@@ -1068,9 +1089,11 @@ function exportToHop() {
   rows.sort(function (x, y) {
     return comboTotal(y, mons, dot) - comboTotal(x, mons, dot);
   });
-  rows.forEach(function (s, i) {
-    out.push([i + 1, s.ten, s.lop, dotVal(s, mons[0], dot),
-      dotVal(s, mons[1], dot), dotVal(s, mons[2], dot), comboTotal(s, mons, dot)]);
+  rows.forEach(function (s) {
+    var tot = comboTotal(s, mons, dot);
+    var rk = 1 + rows.filter(function (o) { return comboTotal(o, mons, dot) > tot; }).length;
+    out.push([rk, s.ten, s.lop, dotVal(s, mons[0], dot),
+      dotVal(s, mons[1], dot), dotVal(s, mons[2], dot), tot]);
   });
   downloadCSV("tohop_" + curCombo + "_" + dot + ".csv", out);
 }
@@ -1078,19 +1101,14 @@ function exportToHop() {
 /* ---------- 8. So sanh giua cac lop (cong khai) ---------- */
 
 function ssKeys(dot) {
-  if (dot === "L1") {
-    return { n: "n1", tb: "tb1", d: "duoi5_l1" };
-  }
-  if (dot === "L2") {
-    return { n: "n2", tb: "tb2", d: "duoi5_l2" };
-  }
-  return { n: "n3", tb: "tb3", d: "duoi5_l3" };
+  var k = Number(dot.slice(1)) || 6;
+  return { n: "n" + k, tb: "tb" + k, d: "duoi5_l" + k };
 }
 
 function renderSoSanh() {
   var tbl = $("ssTable");
   var dotSel = $("selDotSs");
-  var dot = (dotSel && dotSel.value) || "L3";
+  var dot = (dotSel && dotSel.value) || "L6";
   var keys = ssKeys(dot);
   var lops = PUB.meta.classes;
   var h = "<thead><tr><th class='l'>Môn (" + dot + ")</th>";
@@ -1132,7 +1150,7 @@ function renderSoSanh() {
 }
 
 function exportSoSanh() {
-  var dot = ($("selDotSs").value) || "L3";
+  var dot = ($("selDotSs").value) || "L6";
   var keys = ssKeys(dot);
   var lops = PUB.meta.classes;
   var head = ["Mon", "Chi tieu"];
@@ -1166,31 +1184,35 @@ function exportSoSanh() {
 
 function exportSo() {
   var s = PUB.subjects_stats;
-  var head = ["MON", "DTB L1", "SL L1", "% duoi5 L1", "DTB L2", "SL L2",
-    "% duoi5 L2", "DTB L3", "SL L3", "% duoi5 L3"];
+  var head = ["MON"];
+  DOTS.forEach(function (d, i) {
+    var k = i + 1;
+    head.push("DTB L" + k, "SL L" + k, "% duoi5 L" + k);
+  });
   var rows = [head];
   MON_ALL.forEach(function (mon) {
     var t = s[mon];
     if (!t) {
       return;
     }
-    rows.push([mon, t.tb1, t.n1, t.pct_duoi5_l1, t.tb2, t.n2, t.pct_duoi5_l2,
-      (t.tb3 === undefined ? null : t.tb3), (t.n3 === undefined ? null : t.n3),
-      (t.pct_duoi5_l3 === undefined ? null : t.pct_duoi5_l3)]);
+    var r = [mon];
+    for (var k = 1; k <= 7; k++) {
+      r.push(t["tb" + k], t["n" + k], t["pct_duoi5_l" + k]);
+    }
+    rows.push(r);
   });
-  downloadCSV("tonghop_SoGD_L1-L3.csv", rows);
+  downloadCSV("tonghop_SoGD_L1-L7.csv", rows);
 }
 
-function spark(a, b, c) {
-  var vals = [a, b, c];
-  var L = ["L1", "L2", "L3"];
+function spark7(vals) {
   var h = "<span class='spark'>";
   vals.forEach(function (v, i) {
+    var lbl = "L" + (i + 1);
     if (v === null || v === undefined || v === "") {
-      h += "<i title='" + L[i] + ": —' style='height:3px;background:#e2e8f0'></i>";
+      h += "<i title='" + lbl + ": —' style='height:3px;background:#e2e8f0'></i>";
     } else {
       var col = v < 5 ? "#ef4444" : (v >= 8 ? "#22c55e" : "#6366f1");
-      h += "<i title='" + L[i] + ": " + v + "' style='height:"
+      h += "<i title='" + lbl + ": " + v + "' style='height:"
         + Math.max(8, v * 10) + "%;background:" + col + "'></i>";
     }
   });
@@ -1253,6 +1275,15 @@ function init() {
   $("selMon").innerHTML = MON_ALL.map(function (x) {
     return "<option>" + x + "</option>";
   }).join("");
+  if ($("selDotLop")) {
+    $("selDotLop").innerHTML = "<option value='AUTO'>Mới nhất (L7/L6)</option>"
+      + "<option value='TB'>TB tất cả các lần</option>"
+      + ["L7", "L6", "L5", "L4", "L3", "L2", "L1"].map(function (d) {
+        return "<option value='" + d + "'>" + d + "</option>";
+      }).join("");
+    $("selDotLop").value = "AUTO";
+    $("selDotLop").addEventListener("change", renderLop);
+  }
   $("selLop").value = "12A10";
   $("selMon").value = "Toán";
   $("selLop").addEventListener("change", renderLop);
@@ -1271,19 +1302,27 @@ function init() {
   }).join("");
   $("selLopBd").value = "12A10";
   $("selLopBd").addEventListener("change", renderBangDiem);
+  if ($("selDotBd")) {
+    $("selDotBd").innerHTML = "<option value='ALL'>Tất cả đợt có điểm (L1–L7)</option>"
+      + ["L7", "L6", "L5", "L4", "L3", "L2", "L1"].map(function (d) {
+        return "<option value='" + d + "'>Chỉ " + d + " + TB</option>";
+      }).join("");
+    $("selDotBd").value = "ALL";
+    $("selDotBd").addEventListener("change", renderBangDiem);
+  }
   $("bdQ").addEventListener("input", renderBangDiem);
   $("btnCsvBd").addEventListener("click", exportBangDiem);
   $("selLopTh").innerHTML = "<option value='ALL'>Tất cả lớp</option>" + PUB.meta.classes.map(function (c) {
     return "<option>" + c + "</option>";
   }).join("");
-  $("selDotTh").innerHTML = ["L1", "L2", "L3"].map(function (d) {
+  $("selDotTh").innerHTML = ["L7", "L6", "L5", "L4", "L3", "L2", "L1", "TB"].map(function (d) {
     return "<option>" + d + "</option>";
   }).join("");
-  $("selDotTh").value = "L3";
-  $("selDotSs").innerHTML = ["L1", "L2", "L3"].map(function (d) {
+  $("selDotTh").value = "L6";
+  $("selDotSs").innerHTML = ["L6", "L7", "L5", "L4", "L3", "L2", "L1"].map(function (d) {
     return "<option>" + d + "</option>";
   }).join("");
-  $("selDotSs").value = "L3";
+  $("selDotSs").value = "L6";
   $("selLopTh").addEventListener("change", renderToHop);
   $("selDotTh").addEventListener("change", renderToHop);
   $("selDotSs").addEventListener("change", renderSoSanh);
