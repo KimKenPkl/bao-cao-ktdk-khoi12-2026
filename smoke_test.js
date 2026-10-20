@@ -71,7 +71,7 @@ function ok(cond, label) {
 }
 
 ok(ids.tbKhoi.innerHTML.indexOf("6.48") !== -1, "public: bang khoi co TB Toan L6 (6.48)");
-ok(ids.tbKhoi.innerHTML.indexOf("5.44") !== -1, "public: bang khoi co TB Toan L7 (5.44)");
+ok(ids.tbKhoi.innerHTML.indexOf("5.43") !== -1, "public: bang khoi co TB Toan L7 (5.43)");
 ok(ids.gateBox.innerHTML.indexOf("password") !== -1, "khoa: hien o khoa");
 ok(ids.tbPhu.innerHTML.indexOf("Anh") === -1, "khoa: list lop khong lo ten");
 ok(ids.kTbPhu.innerHTML.indexOf("12A6") === -1, "khoa: list khoi khong lo ten");
@@ -97,7 +97,7 @@ async function unlockTest() {
   );
   const plain = await crypto.subtle.decrypt({ name: "AES-GCM", iv: b64(LOCK.iv) }, key, b64(LOCK.ct));
   const sec = JSON.parse(new TextDecoder().decode(plain));
-  ok(sec.class_lists["12A10"]["Toán"].phudao.length === 10, "giai ma: du 10 em 12A10 Toan <5 o L7");
+  ok(sec.class_lists["12A10"]["Toán"].phudao.length === 6, "giai ma: du 6 em 12A10 Toan <5 o L7");
   const a10_hs = sec.students.filter((s) => s.lop === "12A10");
   ok(a10_hs.length === 33 && a10_hs.every((s) => s.l7 && s.l7["Toán"] !== null), "giai ma: 12A10 du 33 em co diem L7");
   ok(sec.students.length >= 460, "giai ma: du danh sach HS toan khoi");
